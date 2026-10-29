@@ -1,0 +1,10 @@
+node_modules/
+client/dist/
+client/dist-android/
+android-signing/
+build/
+data/
+*.sqlite3*
+.DS_Store
+e2e/shots/
+tui/.scratch/

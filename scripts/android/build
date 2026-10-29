@@ -1,0 +1,55 @@
+#!/usr/bin/env sh
+# Builds the Android app into build/almanac.apk, to install on a phone. The app syncs with
+# SERVER_URL, by default this machine's tailnet address on port 8787 (where
+# `tailscale serve --https=8787` puts Almanac); it can be changed in the app's Settings.
+#   scripts/android/build
+#   SERVER_URL=https://computer.your-tailnet.ts.net:8787 scripts/android/build
+#   BUILD_TYPE=debug scripts/android/build    # debuggable, for scripts/android/test
+# The first build makes a signing key in android-signing/. Updates to an installed app must be
+# signed with the same key, so keep a copy of that folder somewhere safe.
+set -e
+cd "$(dirname "$0")/../.."
+BUILD_TYPE="${BUILD_TYPE:-release}"
+
+if [ -z "$SERVER_URL" ]; then
+  host=$(tailscale status --self --peers=false --json 2>/dev/null |
+    sed -n 's/^\s*"DNSName": "\(.*\)\.",\?$/\1/p' | head -1)
+  [ -n "$host" ] || { echo "Set SERVER_URL; couldn't read this machine's tailnet name." >&2; exit 1; }
+  SERVER_URL="https://$host:8787"
+fi
+echo "Syncs with $SERVER_URL"
+
+docker build -q --target build -t almanac-android-build -f scripts/android/Dockerfile scripts/android >/dev/null
+run() {
+  mkdir -p "$HOME/.cache/almanac-gradle"
+  docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e GRADLE_USER_HOME=/gradle \
+    -v "$PWD":/work -v "$HOME/.cache/almanac-gradle":/gradle -w /work almanac-android-build "$@"
+}
+
+if [ ! -f android-signing/keystore.properties ]; then
+  mkdir -p android-signing && chmod 700 android-signing
+  password=$(head -c 24 /dev/urandom | base64 | tr -d '/+=')
+  run keytool -genkeypair -keystore android-signing/almanac.jks -alias almanac -keyalg RSA -keysize 4096 \
+    -validity 36500 -storepass "$password" -keypass "$password" -dname "CN=Almanac" >/dev/null 2>&1
+  printf 'storeFile=almanac.jks\nstorePassword=%s\nkeyAlias=almanac\nkeyPassword=%s\n' "$password" "$password" \
+    > android-signing/keystore.properties
+  chmod 600 android-signing/*
+  echo "Made a signing key in android-signing/. Back it up: updates need the same key."
+fi
+
+# The page, built for the app, and copied into the Android project.
+VITE_APP=android VITE_SERVER_URL="$SERVER_URL" scripts/node npm run build:android -w client >/dev/null
+grep -rqF "$SERVER_URL" client/dist-android/assets || { echo "The page wasn't built for the app." >&2; exit 1; }
+scripts/node sh -c 'cd client && npx cap sync android' >/dev/null
+
+# A version code that grows with every build (minutes since 2026), as Android needs for updates.
+code=$(( ($(date +%s) - 1767225600) / 60 ))
+version=$(sed -n 's/^\s*"version": "\(.*\)",$/\1/p' package.json | head -1)
+task=assemble$(echo "$BUILD_TYPE" | sed 's/./\U&/')
+run sh -c "cd client/android && ./gradlew --no-daemon -q $task -PversionCode=$code -PversionName=$version"
+
+mkdir -p build
+apk=$(ls client/android/app/build/outputs/apk/"$BUILD_TYPE"/*.apk | head -1)
+out=build/almanac$([ "$BUILD_TYPE" = release ] || echo "-$BUILD_TYPE").apk
+cp "$apk" "$out"
+echo "Built $out (version $version, code $code)"

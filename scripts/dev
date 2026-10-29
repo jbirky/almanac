@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Starts the API server (port 8787) and the Vite dev server (port 5173) in a Node 22 container.
+cd "$(dirname "$0")/.."
+PORTS=1 exec scripts/node npm run dev

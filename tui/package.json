@@ -1,0 +1,26 @@
+{
+  "name": "@almanac/tui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Almanac in the terminal: a full copy of your journal and tasks that syncs with the server",
+  "type": "module",
+  "bin": {
+    "almanac": "src/cli.js"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "dependencies": {
+    "@almanac/shared": "*",
+    "better-sqlite3": "^13.0.3",
+    "chalk": "^6.0.1",
+    "chrono-node": "^2.10.3",
+    "ink": "^8.0.0",
+    "react": "^19.3.1",
+    "string-width": "^8.3.0",
+    "yjs": "^13.6.33"
+  },
+  "devDependencies": {
+    "ink-testing-library": "^4.0.0"
+  }
+}

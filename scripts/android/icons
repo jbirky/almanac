@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+# Draws the Android app's icon at every density: a 3x3 calendar grid, shaded like the
+# calendar in the app, in white on the accent green. Needs ImageMagick (convert).
+set -e
+cd "$(dirname "$0")/../../client/android/app/src/main/res"
+GREEN='#2b685b'
+# The grid's cells by opacity, row by row.
+LEVELS='0.35 0.7 1 0.7 1 0.5 1 0.5 0.25'
+# grid CELL GAP: the grid, centered on a 432px canvas, as one ImageMagick drawing string.
+grid() {
+  cell=$1 gap=$2
+  start=$(( (432 - 3 * cell - 2 * gap) / 2 ))
+  radius=$(( cell / 5 ))
+  i=0
+  for level in $LEVELS; do
+    x=$(( start + (i % 3) * (cell + gap) )) y=$(( start + (i / 3) * (cell + gap) ))
+    printf 'fill rgba(255,255,255,%s) roundrectangle %s,%s %s,%s %s,%s ' \
+      "$level" "$x" "$y" $(( x + cell )) $(( y + cell )) "$radius" "$radius"
+    i=$(( i + 1 ))
+  done
+}
+
+for density in mdpi:1 hdpi:1.5 xhdpi:2 xxhdpi:3 xxxhdpi:4; do
+  name=${density%:*} scale=${density#*:}
+  fg=$(awk "BEGIN { print int(108 * $scale) }")
+  legacy=$(awk "BEGIN { print int(48 * $scale) }")
+  # Adaptive icon (Android 8 and later): the grid alone, which the launcher puts on the green
+  # and crops to its own shape. 432px is 108dp at 4x; the grid stays in the middle 66dp.
+  convert -size 432x432 xc:none -draw "$(grid 52 18)" -resize "${fg}x${fg}" "mipmap-$name/ic_launcher_foreground.png"
+  # Older Android: the grid on a green rounded square, and on a green circle.
+  convert -size 432x432 xc:none -fill "$GREEN" -draw 'roundrectangle 36,36 395,395 64,64' -draw "$(grid 64 22)" \
+    -resize "${legacy}x${legacy}" "mipmap-$name/ic_launcher.png"
+  convert -size 432x432 xc:none -fill "$GREEN" -draw 'circle 216,216 216,20' -draw "$(grid 56 20)" \
+    -resize "${legacy}x${legacy}" "mipmap-$name/ic_launcher_round.png"
+done
+echo "icons drawn"

@@ -1,0 +1,14 @@
+services:
+  almanac:
+    build: .
+    image: almanac:latest
+    container_name: almanac
+    restart: unless-stopped
+    ports:
+      # Reach it from the tailnet with: tailscale serve --bg --https=8787 http://127.0.0.1:8787
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - almanac-data:/data
+
+volumes:
+  almanac-data:

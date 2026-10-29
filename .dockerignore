@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+client/dist
+data
+.git
+client/dist-android
+client/android
+android-signing
+build
+e2e/shots
+tui/.scratch

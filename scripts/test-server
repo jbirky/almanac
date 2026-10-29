@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# Starts a throwaway Almanac server for tests on 127.0.0.1:${PORT:-8790}, serving the current
+# client build from a fresh, empty data directory. Leaves any real deployment alone.
+#   scripts/test-server         # start (replacing a previous test server)
+#   scripts/test-server stop
+set -e
+cd "$(dirname "$0")/.."
+PORT="${PORT:-8790}"
+docker rm -f almanac-test >/dev/null 2>&1 || true
+[ "$1" = "stop" ] && exit 0
+exec docker run -d --name almanac-test --tmpfs /data:uid=1000,gid=1000 \
+  -u "$(id -u):$(id -g)" -v "$PWD":/app:ro -w /app -e DATA_DIR=/data \
+  -p "127.0.0.1:$PORT:8787" node:22-alpine node server/src/index.js

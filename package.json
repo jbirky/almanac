@@ -1,0 +1,27 @@
+{
+  "name": "almanac",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A self-hosted, local-first notes and tasks app",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "client",
+    "tui"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "concurrently -n server,client \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client",
+    "start": "node server/src/index.js",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "vitest": "^5.0.4"
+  }
+}

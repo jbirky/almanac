@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#2B685B</color>
+    <!-- Behind the icon while the app opens: the page's color in light mode. -->
+    <color name="splash_background">#FBFAF8</color>
+</resources>

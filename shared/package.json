@@ -1,0 +1,14 @@
+{
+  "name": "@almanac/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Schema, clock, merge and queries shared by the Almanac client and server",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "chrono-node": "^2.10.3",
+    "yjs": "^13.6.33"
+  }
+}

@@ -1,0 +1,45 @@
+#!/usr/bin/env sh
+# Tests the Android app in an emulator (needs /dev/kvm): a debug build that syncs with a
+# throwaway test server (scripts/test-server), driven by e2e/android.mjs next to a laptop in
+# Chromium. Leaves the emulator running for another go; `scripts/android/test stop` stops it.
+set -e
+cd "$(dirname "$0")/../.."
+if [ "$1" = "stop" ]; then docker rm -f almanac-emu >/dev/null 2>&1 || true; exit 0; fi
+
+BUILD_TYPE=debug SERVER_URL=http://localhost:8790 scripts/android/build
+scripts/node npm run build >/dev/null 2>&1   # the web build, which the test server serves
+scripts/test-server >/dev/null
+
+if [ "$(docker inspect -f '{{.State.Running}}' almanac-emu 2>/dev/null)" != true ]; then
+  docker build -q --target emulator -t almanac-android-emulator -f scripts/android/Dockerfile scripts/android >/dev/null
+  docker rm -f almanac-emu >/dev/null 2>&1 || true
+  docker run -d --name almanac-emu --device /dev/kvm --network host -v "$PWD/build":/apk almanac-android-emulator \
+    /opt/android-sdk/emulator/emulator -avd test -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect \
+    -no-snapshot -wipe-data -memory 4096 -cores 4 >/dev/null
+  echo "Starting the emulator…"
+  until [ "$(docker exec almanac-emu adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
+    [ "$(docker inspect -f '{{.State.Running}}' almanac-emu)" = true ] || { docker logs almanac-emu | tail; exit 1; }
+    sleep 5
+  done
+fi
+adb() { docker exec almanac-emu adb "$@"; }
+launch() { adb shell am force-stop app.almanac; adb shell am start -W -n app.almanac/.MainActivity >/dev/null; }
+
+adb uninstall app.almanac >/dev/null 2>&1 || true
+adb install /apk/almanac-debug.apk >/dev/null
+adb reverse tcp:8790 tcp:8790 >/dev/null  # the phone's localhost:8790 is the test server
+until curl -sf http://127.0.0.1:8790/api/health >/dev/null; do sleep 1; done
+launch
+
+part() {
+  docker run --rm --network host --ipc host -u "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD/e2e":/work \
+    mcr.microsoft.com/playwright:v1.61.0-noble sh -c \
+    "cd /tmp && npm i -s --no-audit --no-fund @playwright/test@1.61.0 >/dev/null 2>&1 && cp /work/android.mjs . && node android.mjs $1"
+}
+mkdir -p e2e/shots
+part 1
+adb reverse --remove tcp:8790
+launch
+part 2
+adb reverse tcp:8790 tcp:8790 >/dev/null
+part 3

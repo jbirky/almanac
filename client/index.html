@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2f6f62" />
+    <title>Almanac</title>
+    <script>
+      // Appearance settings (src/lib/settings.js), applied before the page first draws.
+      try {
+        const settings = JSON.parse(localStorage.getItem('almanac.settings') || '{}');
+        const defaults = { mode: 'system', theme: 'paper', font: 'system' };
+        for (const key in defaults) {
+          const value = settings[key];
+          if (typeof value === 'string' && /^[a-z]+$/.test(value) && value !== defaults[key]) {
+            document.documentElement.dataset[key] = value;
+          }
+        }
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,2183 @@
+/* Colors come in light and dark pairs, and the color scheme on <html> picks one: the system's,
+   or always light or dark when Settings says so (data-mode). */
+:root {
+  color-scheme: light dark;
+  --text: light-dark(#1f1d1a, #ebe7e0);
+  --muted: light-dark(#68635b, #9b958b);
+  --late: light-dark(#b4442f, #e8836c);
+  --late-soft: light-dark(rgba(180, 68, 47, 0.1), rgba(232, 131, 108, 0.12));
+  --match: light-dark(#d39b2a, #e0b04a);
+  --chip: light-dark(rgba(31, 29, 26, 0.06), rgba(235, 231, 224, 0.08));
+  /* Label colors for notes boxes; each reads at 4.5:1 or better as chip text */
+  --blue: light-dark(#2a5c9b, #86ade8);
+  --orange: light-dark(#964713, #e99a62);
+  --green: light-dark(#2f6a2e, #8cc283);
+  --purple: light-dark(#7343a6, #b896e8);
+  --red: light-dark(#a3323f, #ec8790);
+  --teal: light-dark(#1a6570, #6cc6cf);
+  --yellow: light-dark(#735806, #d9b955);
+  --pink: light-dark(#973470, #e690c4);
+  --label: var(--muted);
+  --radius: 8px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root[data-mode='light'] {
+  color-scheme: light;
+}
+
+:root[data-mode='dark'] {
+  color-scheme: dark;
+}
+
+/* Color schemes: the page, the left panel, lines, empty calendar days and the accent, each
+   checked for 4.5:1 text in both modes. They apply to any element, so Settings can preview
+   each one. */
+:root,
+[data-theme='paper'] {
+  --bg: light-dark(#fbfaf8, #171614);
+  --panel: light-dark(#f3f1ed, #1f1e1b);
+  --line: light-dark(#e3dfd8, #34312c);
+  --cell: light-dark(#e5e1d9, #2c2a27);
+  --accent: light-dark(#2b685b, #6cbfa9);
+  --accent-soft: light-dark(rgba(43, 104, 91, 0.12), rgba(108, 191, 169, 0.14));
+}
+
+[data-theme='ocean'] {
+  --bg: light-dark(#f9fafc, #13161a);
+  --panel: light-dark(#eff3f7, #1a1f25);
+  --line: light-dark(#dde3ea, #2d343d);
+  --cell: light-dark(#e1e7ee, #262c34);
+  --accent: light-dark(#245f96, #7cb2e6);
+  --accent-soft: light-dark(rgba(36, 95, 150, 0.12), rgba(124, 178, 230, 0.14));
+}
+
+[data-theme='rose'] {
+  --bg: light-dark(#fcf9f9, #181415);
+  --panel: light-dark(#f6f0f0, #211b1d);
+  --line: light-dark(#ebdfe0, #382e31);
+  --cell: light-dark(#ece2e3, #2f272a);
+  --accent: light-dark(#9e3a59, #eb94b0);
+  --accent-soft: light-dark(rgba(158, 58, 89, 0.12), rgba(235, 148, 176, 0.14));
+}
+
+[data-theme='plum'] {
+  --bg: light-dark(#faf9fc, #161419);
+  --panel: light-dark(#f2f0f6, #1e1b23);
+  --line: light-dark(#e2dee9, #332e3b);
+  --cell: light-dark(#e6e2ed, #2b2731);
+  --accent: light-dark(#6a479f, #bba1ef);
+  --accent-soft: light-dark(rgba(106, 71, 159, 0.12), rgba(187, 161, 239, 0.14));
+}
+
+[data-theme='sand'] {
+  --bg: light-dark(#fcf9f3, #181510);
+  --panel: light-dark(#f5efe3, #211d16);
+  --line: light-dark(#e8dfcd, #363024);
+  --cell: light-dark(#ebe3d3, #2e291f);
+  --accent: light-dark(#875611, #e2b25f);
+  --accent-soft: light-dark(rgba(135, 86, 17, 0.12), rgba(226, 178, 95, 0.14));
+}
+
+[data-theme='graphite'] {
+  --bg: light-dark(#fafafa, #151515);
+  --panel: light-dark(#f2f2f2, #1e1e1e);
+  --line: light-dark(#e1e1e1, #333333);
+  --cell: light-dark(#e5e5e5, #2b2b2b);
+  --accent: light-dark(#3f4652, #b9c1cd);
+  --accent-soft: light-dark(rgba(63, 70, 82, 0.12), rgba(185, 193, 205, 0.14));
+}
+
+/* Fonts. All but the system's are bundled with the app (main.jsx). One with small lowercase
+   letters is scaled up to match the others (--font-adjust, an x-height to font size ratio). */
+[data-font] {
+  --font-adjust: none;
+}
+
+[data-font='system'] {
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-font='inter'] {
+  --font: 'Inter Variable', system-ui, sans-serif;
+}
+
+[data-font='plex'] {
+  --font: 'IBM Plex Sans Variable', system-ui, sans-serif;
+}
+
+[data-font='nunito'] {
+  --font: 'Nunito Variable', system-ui, sans-serif;
+}
+
+[data-font='atkinson'] {
+  --font: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+}
+
+[data-font='shantell'] {
+  --font: 'Shantell Sans Variable', system-ui, sans-serif;
+}
+
+[data-font='literata'] {
+  --font: 'Literata Variable', Georgia, serif;
+}
+
+[data-font='sourceserif'] {
+  --font: 'Source Serif 4 Variable', Georgia, serif;
+}
+
+[data-font='newsreader'] {
+  --font: 'Newsreader Variable', Georgia, serif;
+}
+
+[data-font='merriweather'] {
+  --font: 'Merriweather Variable', Georgia, serif;
+}
+
+[data-font='garamond'] {
+  --font: 'EB Garamond Variable', Garamond, Georgia, serif;
+  --font-adjust: 0.47;
+}
+
+[data-font='mono'] {
+  --font: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+
+[data-font='courier'] {
+  --font: 'Courier Prime', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 var(--font);
+  font-size-adjust: var(--font-adjust, none);
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  border-radius: 6px;
+}
+
+a {
+  color: var(--accent);
+}
+
+.muted,
+.subtle {
+  color: var(--muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.empty {
+  color: var(--muted);
+  margin: 0;
+}
+
+mark {
+  background: var(--accent-soft);
+  color: inherit;
+  border-radius: 2px;
+}
+
+/* A label's color, for the element and everything in it */
+[data-color='blue'] {
+  --label: var(--blue);
+}
+
+[data-color='orange'] {
+  --label: var(--orange);
+}
+
+[data-color='green'] {
+  --label: var(--green);
+}
+
+[data-color='purple'] {
+  --label: var(--purple);
+}
+
+[data-color='red'] {
+  --label: var(--red);
+}
+
+[data-color='teal'] {
+  --label: var(--teal);
+}
+
+[data-color='yellow'] {
+  --label: var(--yellow);
+}
+
+[data-color='pink'] {
+  --label: var(--pink);
+}
+
+/* A color picked by hand, as a shade for each mode that keeps text readable (lib/color.js) */
+[data-color='custom'] {
+  --label: light-dark(var(--custom-light), var(--custom-dark));
+}
+
+/* Layout: calendar and tasks on the left, the selected day on the right */
+
+.app {
+  display: grid;
+  /* The panel takes the width it was dragged to, giving way in a window too narrow for it */
+  grid-template-columns: minmax(280px, var(--panel-width, 420px)) 0 minmax(420px, 1fr);
+  height: 100%;
+}
+
+/* The border between the panels, dragged to resize them: a zero-width column, its grip
+   straddling the panel's edge */
+.splitter {
+  position: relative;
+  z-index: 5;
+  width: 9px;
+  margin-left: -5px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.splitter::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 3px;
+  transition: background 0.15s;
+}
+
+.splitter:hover::after,
+.splitter:focus-visible::after,
+.resizing .splitter::after {
+  background: var(--accent);
+}
+
+.splitter:focus-visible {
+  outline: none;
+}
+
+.resizing,
+.resizing * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+main {
+  overflow-y: auto;
+}
+
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 18px 20px 14px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.overview-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search,
+.task-input input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+}
+
+.search {
+  border-color: transparent;
+  background: transparent;
+  padding-left: 0;
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--line);
+  background: var(--bg);
+  padding-left: 10px;
+}
+
+.close-overview {
+  display: none;
+}
+
+/* Calendar heatmap */
+
+.heatmap {
+  --size: 11px;
+  --gap: 3px;
+  display: flex;
+  gap: 4px;
+}
+
+.heatmap-weekdays {
+  display: grid;
+  grid-template-rows: repeat(7, var(--size));
+  row-gap: var(--gap);
+  padding-top: calc(3px + 16px + var(--gap));
+  font-size: 9px;
+  line-height: var(--size);
+  color: var(--muted);
+}
+
+.heatmap-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 3px 3px 8px;
+  scrollbar-width: thin;
+}
+
+.heatmap-months {
+  display: grid;
+  grid-template-columns: repeat(var(--columns), var(--size));
+  column-gap: var(--gap);
+  width: max-content;
+  height: 16px;
+  margin-bottom: var(--gap);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.heatmap-months span {
+  white-space: nowrap;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-rows: repeat(7, var(--size));
+  grid-auto-columns: var(--size);
+  grid-auto-flow: column;
+  gap: var(--gap);
+  width: max-content;
+}
+
+.cell {
+  position: relative;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 2px;
+  background: var(--cell);
+}
+
+.cell.l1 {
+  background: color-mix(in srgb, var(--accent) 30%, var(--cell));
+}
+
+.cell.l2 {
+  background: color-mix(in srgb, var(--accent) 55%, var(--cell));
+}
+
+.cell.l3 {
+  background: color-mix(in srgb, var(--accent) 78%, var(--cell));
+}
+
+.cell.l4 {
+  background: var(--accent);
+}
+
+.cell.future {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.cell.wrote {
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.cell.due::after {
+  content: '';
+  position: absolute;
+  inset: 3.5px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.cell.today {
+  outline: 1px solid var(--muted);
+  outline-offset: 1px;
+}
+
+.cell:hover {
+  outline: 1px solid var(--text);
+  outline-offset: 1px;
+}
+
+.cell[aria-current] {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+.cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cell.dim {
+  opacity: 0.25;
+}
+
+.cell.match {
+  background: var(--match);
+}
+
+.overview[data-color] .cell.match {
+  background: var(--label);
+}
+
+/* Tasks */
+
+.task-input {
+  position: relative;
+}
+
+.task-input:has(.capture-preview) input {
+  padding-right: 180px;
+}
+
+.capture-preview {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+  max-width: 170px;
+  pointer-events: none;
+}
+
+.capture-preview .category-chip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-group h2 {
+  font-size: 13px;
+  font-weight: 650;
+  margin: 0 0 2px;
+}
+
+.task-group.uncategorized h2 {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* The groups sit in the panel's own column; this wrapper only lets them be found together. */
+.task-groups {
+  display: contents;
+}
+
+.task-group,
+.task-group-head {
+  position: relative;
+}
+
+/* The grip a category or task in the list is moved by, in the margin beside it. It works by
+   touch too. */
+.list-grip {
+  position: absolute;
+  top: 50%;
+  left: -17px;
+  display: flex;
+  padding: 2px 3px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  cursor: grab;
+  opacity: 0;
+  transform: translateY(-50%);
+  touch-action: none;
+}
+
+.task-group-head:hover .list-grip,
+.task-row:hover > .list-grip,
+.list-grip:focus-visible,
+.dragging > .task-group-head .list-grip,
+.dragging > .task-row > .list-grip {
+  opacity: 1;
+}
+
+.list-grip:hover {
+  background: var(--chip);
+  color: var(--text);
+}
+
+.task-group.dragging,
+.task-item.dragging {
+  opacity: 0.5;
+}
+
+.dragging .list-grip {
+  cursor: grabbing;
+}
+
+/* Where a dragged category or task will go: a line between two others */
+.task-item {
+  position: relative;
+}
+
+.task-group.drop-before::before,
+.task-group.drop-after::after,
+.task-item.drop-before::before,
+.task-item.drop-after::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.task-group.drop-before::before {
+  top: -9px;
+}
+
+.task-group.drop-after::after {
+  bottom: -9px;
+}
+
+.task-item.drop-before::before {
+  top: -1px;
+}
+
+.task-item.drop-after::after {
+  bottom: -1px;
+}
+
+.reordering {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+}
+
+.check {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.task-title {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.task-title:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.task-title-input,
+.task-block-title {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 2px 0;
+}
+
+.task-title-input {
+  border-bottom: 1px solid var(--accent);
+}
+
+.task-row.done .task-title,
+.task-block.done .task-block-title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.row-delete {
+  display: flex;
+  flex: none;
+  padding: 3px;
+  color: var(--muted);
+  opacity: 0;
+}
+
+.row-delete:hover {
+  color: var(--late);
+  background: var(--late-soft);
+}
+
+.task-row:hover .row-delete,
+.task-block:hover .row-delete,
+.row-delete:focus-visible {
+  opacity: 1;
+}
+
+.category-chip {
+  flex: none;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  line-height: 20px;
+  padding: 0 7px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.category-chip.empty {
+  background: var(--chip);
+  color: var(--muted);
+}
+
+.category-chip .new {
+  color: var(--muted);
+}
+
+.category-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.category-input {
+  flex: none;
+  width: 120px;
+  font-size: 12px;
+  line-height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg);
+  outline: none;
+}
+
+.date-chip {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  font-size: 12px;
+  line-height: 20px;
+  padding: 0 7px;
+  border-radius: 10px;
+  background: var(--chip);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* A task's due date sits in a column of its own at the end of its row, right-aligned, even when
+   there's no date to show (a done task). The column fits the longest date ("Yesterday", with
+   its × showing, in the widest font), so the dates and the category chips before them line up
+   from row to row. */
+.date-slot {
+  display: flex;
+  justify-content: flex-end;
+  flex: none;
+  width: 88px;
+}
+
+/* In the list on the left, the date already ends each row and categories show only on hover,
+   one row at a time, so the column keeps to the date's own width and leaves titles the room. */
+.overview .date-slot {
+  width: auto;
+}
+
+.date-pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+}
+
+/* An empty chip is just an icon, so it takes little room from the title */
+.category-chip.empty,
+.date-chip.empty,
+.subtask-chip.empty {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 5px;
+}
+
+.date-pick input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.date-chip:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* The x that removes a due date, shown with the row's other controls */
+.date-clear {
+  max-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 20px;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.task-row:hover .date-clear,
+.task-block:hover .date-clear,
+.date-chip:focus-within .date-clear {
+  max-width: 16px;
+  margin: 0 -3px 0 4px;
+}
+
+.date-clear:hover {
+  opacity: 1;
+}
+
+.date-chip.late {
+  background: var(--late-soft);
+  color: var(--late);
+}
+
+.date-chip.quiet,
+.date-chip.empty,
+.category-chip.quiet,
+.category-chip.empty,
+.subtask-chip.empty {
+  opacity: 0;
+}
+
+.task-row:hover :is(.date-chip, .category-chip, .subtask-chip),
+.task-block:hover :is(.date-chip, .category-chip, .subtask-chip),
+.date-chip:focus-within,
+.category-chip:focus-visible,
+.subtask-chip:focus-visible {
+  opacity: 1;
+}
+
+/* Subtasks: a chip on the task ("2/5" done), and the list under it when open */
+.subtask-chip {
+  flex: none;
+  font-size: 12px;
+  line-height: 20px;
+  padding: 0 7px;
+  border-radius: 10px;
+  background: var(--chip);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.subtask-chip[aria-expanded='true'] {
+  color: var(--text);
+}
+
+.subtask-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.subtasks {
+  padding: 0 0 6px 26px;
+}
+
+.subtask-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.subtask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.subtask-title,
+.subtask-add input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.95em;
+}
+
+.subtask-title:focus,
+.subtask-add input:focus {
+  box-shadow: 0 1px 0 var(--accent);
+}
+
+.subtask.done .subtask-title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.subtask:hover .row-delete {
+  opacity: 1;
+}
+
+/* The box for the next subtask lines up with the titles above it */
+.subtask-add {
+  padding-left: 24px;
+}
+
+@media (hover: none) {
+  .row-delete {
+    opacity: 1;
+  }
+
+  /* Dragging tasks and boxes needs a mouse. */
+  .drag-handle {
+    display: none;
+  }
+
+  .list-grip {
+    opacity: 0.6;
+  }
+
+  .date-clear {
+    max-width: 16px;
+    margin: 0 -3px 0 4px;
+  }
+
+  .date-chip.quiet,
+  .date-chip.empty,
+  .category-chip.quiet,
+  .category-chip.empty,
+  .subtask-chip.empty {
+    opacity: 0.6;
+  }
+}
+
+/* Labels on notes boxes */
+
+.label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--label) 14%, transparent);
+  color: var(--label);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.label-chip.empty {
+  background: var(--chip);
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.label-chip:focus-visible {
+  outline: 2px solid var(--label);
+  outline-offset: 1px;
+}
+
+.label-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--label);
+}
+
+/* Search results */
+
+.search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.search-results button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.search-results button:hover .result-day {
+  color: var(--accent);
+}
+
+.result-day {
+  font-weight: 600;
+}
+
+/* Sync status */
+
+.sync-status {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.sync-status button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 2px 0;
+}
+
+.sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+[data-state='synced'] .sync-dot {
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+[data-state='syncing'] .sync-dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--muted);
+}
+
+[data-state='offline'] .sync-dot {
+  background: var(--muted);
+}
+
+.sync-status[data-state='error'],
+.sync-status .warn {
+  color: var(--late);
+}
+
+[data-state='error'] .sync-dot {
+  background: var(--late);
+}
+
+/* Day page */
+
+.day-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 32px 120px;
+  font-size: 16px;
+}
+
+.day-header {
+  margin-bottom: 24px;
+}
+
+/* The kicker and the view switch, then the title and the day's arrows */
+.day-header-top,
+.day-header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.day-header-main {
+  align-items: flex-end;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.day-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.day-title {
+  text-align: left;
+}
+
+.view-switch {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  padding: 2px;
+  font-size: 13px;
+  background: var(--chip);
+  border-radius: 8px;
+}
+
+.view-switch a {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 10px;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.view-switch a:hover {
+  color: var(--text);
+}
+
+.view-switch a[aria-current] {
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.view-switch a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.day-nav {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}
+
+.day-nav button {
+  border: 1px solid var(--line);
+  padding: 2px 10px;
+  color: var(--muted);
+}
+
+.day-nav button:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* The day's "Due" panel, above the journal */
+.due-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 28px;
+  padding: 12px 16px 14px;
+  background: var(--panel);
+  border-radius: var(--radius);
+}
+
+.due-panel h2,
+.due-panel h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.due-panel h3 {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.due-panel .task-list {
+  margin: 0;
+}
+
+.due-panel .empty {
+  font-size: 14px;
+}
+
+/* Journal editor */
+
+.journal,
+.note-editor[aria-busy] {
+  min-height: 50vh;
+}
+
+.journal {
+  display: flex;
+  flex-direction: column;
+}
+
+.journal-rest {
+  flex: 1;
+  min-height: 48px;
+  cursor: text;
+}
+
+.add-note-box {
+  align-self: flex-start;
+  margin: 10px 0 0 -8px;
+  padding: 2px 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.add-note-box:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.prose {
+  outline: none;
+  line-height: 1.65;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  line-height: 1.25;
+  margin: 1.2em 0 0.4em;
+}
+
+.prose pre {
+  background: var(--panel);
+  padding: 10px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--line);
+  margin-left: 0;
+  padding-left: 14px;
+  color: var(--muted);
+}
+
+.task-block {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0;
+  padding: 2px 0;
+}
+
+/* A task written straight in the day's journal ends 16px short of the page, as tasks in the
+   Due panel and in notes boxes do, so chips line up all the way down the page. */
+.note-editor > .prose > .node-taskRef .task-block {
+  padding-right: 16px;
+}
+
+/* The grip a task block is dragged by, in the margin to its left */
+.drag-handle {
+  position: absolute;
+  top: 50%;
+  left: -22px;
+  display: flex;
+  padding: 3px 4px;
+  border-radius: 4px;
+  color: var(--muted);
+  cursor: grab;
+  opacity: 0;
+  transform: translateY(-50%);
+}
+
+.note-box .drag-handle {
+  left: -16px;
+  padding: 3px 2px;
+}
+
+.task-block:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:hover {
+  background: var(--chip);
+  color: var(--text);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* A notes box's own grip, beside its label, lined up with the task grips in the journal */
+.note-box > .drag-handle.box-grip {
+  top: 17px;
+  left: -25px;
+  padding: 3px 4px;
+}
+
+.note-box:hover > .box-grip {
+  opacity: 1;
+}
+
+.ProseMirror-selectednode > .note-box {
+  outline: 2px solid var(--accent-soft);
+}
+
+.task-block.ProseMirror-selectednode {
+  outline: 2px solid var(--accent-soft);
+  border-radius: 4px;
+}
+
+.item-ref {
+  border-bottom: 1px dotted var(--muted);
+}
+
+/* Equations: $x^2$ in a line, $$...$$ on one of its own. A click shows the LaTeX to edit. */
+.math {
+  position: relative;
+  cursor: pointer;
+}
+
+/* Formulas keep KaTeX's own sizes, whatever the font. */
+.math-render .katex {
+  font-size-adjust: none;
+}
+
+.math-render {
+  border-radius: 4px;
+}
+
+.math-render:hover,
+.math.selected .math-render,
+.math.editing .math-render {
+  background: var(--accent-soft);
+}
+
+.math-block {
+  margin: 0.8em 0;
+}
+
+/* Images in notes, at their own size up to the width of the page */
+.image-block {
+  margin: 0.8em 0;
+  line-height: 0;
+}
+
+.image-block img,
+.image-waiting {
+  border-radius: 6px;
+}
+
+.image-block img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+}
+
+.image-block.selected img,
+.image-block.selected .image-waiting {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.image-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  min-height: 80px;
+  max-height: 70vh;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Messages such as "Only images can go in notes", at the bottom of the page */
+.notices {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 50;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--radius);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.notice button {
+  flex: none;
+  padding: 0 6px;
+  font-size: 18px;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.notice button:hover {
+  opacity: 1;
+}
+
+.math-block .math-render {
+  display: block;
+  padding: 2px 8px;
+  overflow-x: auto;
+}
+
+.math-block .katex-display {
+  margin: 0.4em 0;
+}
+
+.math-editor {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: min(420px, calc(100vw - 48px));
+  padding: 6px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  cursor: auto;
+}
+
+/* Under an equation on its own line, the source takes the line's width, in the flow */
+.math-block .math-editor {
+  position: static;
+  width: auto;
+  margin-top: 6px;
+  box-shadow: none;
+}
+
+.math-source {
+  width: 100%;
+  padding: 4px 8px;
+  font: 14px/1.4 ui-monospace, 'JetBrains Mono Variable', monospace;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  outline: none;
+  resize: vertical;
+}
+
+.math-source:focus {
+  border-color: var(--accent);
+}
+
+.math-hint {
+  padding: 0 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Notes boxes: a part of the journal under a colored label */
+
+.note-box {
+  position: relative;
+  margin: 14px 0;
+  /* Its right border and padding come to 16px, as the Due panel's padding does. */
+  padding: 6px 15px 2px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--label);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--label) 4%, var(--bg));
+}
+
+.note-box.unlabeled {
+  border-left-color: var(--line);
+}
+
+.note-box-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+/* On its own day, a box pinned to the days after it shows a thumbtack beside its label. */
+.pin-mark {
+  display: flex;
+  color: var(--label);
+}
+
+/* Boxes pinned on earlier days, at the top of a day: the box itself, with the day it's on and a
+   way to stop pinning it from here on. */
+.pinned-boxes {
+  margin-bottom: 14px;
+}
+
+.pinned-boxes .note-box:first-child {
+  margin-top: 0;
+}
+
+.pinned-from {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pinned-from button {
+  color: inherit;
+}
+
+.pinned-from button:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.unpin {
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+.unpin:hover {
+  background: var(--chip);
+  color: var(--text);
+}
+
+.note-box.pinned .box-editor .prose {
+  padding: 6px 0 4px;
+}
+
+/* The editor puts the box's blocks in a div inside .note-box-body */
+.note-box-body > div > :first-child {
+  margin-top: 6px;
+}
+
+.note-box-body > div > :last-child {
+  margin-bottom: 8px;
+}
+
+.note-box-body > div > p.is-empty:only-child::before {
+  content: 'Notes';
+  color: var(--muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* The journal by label: one section per day, each with that day's boxes */
+
+.label-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--label);
+}
+
+.label-title .label-dot {
+  width: 12px;
+  height: 12px;
+}
+
+.label-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -8px 0 28px;
+}
+
+.label-tabs .label-chip {
+  text-decoration: none;
+}
+
+.label-tabs .label-chip[aria-current] {
+  background: var(--label);
+  color: var(--bg);
+}
+
+.label-tabs .label-chip[aria-current] .label-dot {
+  background: var(--bg);
+}
+
+.label-day {
+  margin-bottom: 26px;
+}
+
+.label-day h2 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.label-day h2 button {
+  color: var(--muted);
+}
+
+.label-day h2 button:hover {
+  color: var(--text);
+}
+
+.label-day .near {
+  margin-right: 8px;
+  color: var(--accent);
+}
+
+.label-day .note-box {
+  margin: 0 0 10px;
+  padding: 0 14px;
+}
+
+.box-editor .prose {
+  padding: 8px 0;
+}
+
+.box-editor .prose > :last-child {
+  margin-bottom: 0;
+}
+
+.label-day .add-note-box,
+.more-days {
+  margin: 0 0 0 -8px;
+}
+
+.more-days {
+  padding: 2px 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.more-days:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* The label picker under a box's chip */
+
+.label-picker {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: min(270px, calc(100vw - 48px));
+  padding: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: normal;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  cursor: auto;
+}
+
+.label-search,
+.label-name {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  outline: none;
+}
+
+.label-search:focus,
+.label-name:focus {
+  border-color: var(--accent);
+}
+
+.label-name[aria-invalid] {
+  border-color: var(--late);
+}
+
+.label-options {
+  list-style: none;
+  max-height: 220px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+
+.label-options li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.label-options li.active {
+  background: var(--chip);
+}
+
+.label-option-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.label-current {
+  color: var(--accent);
+}
+
+.label-create {
+  color: var(--muted);
+}
+
+.label-picker-actions {
+  display: flex;
+  flex-direction: column;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.label-picker-actions button,
+.label-back,
+.label-delete-start,
+.label-delete button {
+  padding: 4px 8px;
+  font-size: 13px;
+  text-align: left;
+  color: var(--muted);
+}
+
+.label-picker-actions button:hover,
+.label-back:hover,
+.label-delete-start:hover,
+.label-delete button:hover {
+  background: var(--chip);
+  color: var(--text);
+}
+
+.label-back {
+  align-self: flex-start;
+}
+
+.label-error,
+.label-note,
+.label-delete p {
+  margin: 0;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.label-note {
+  color: var(--muted);
+}
+
+.label-error {
+  color: var(--late);
+}
+
+.label-delete p {
+  color: var(--muted);
+}
+
+.label-delete .danger,
+.label-delete .danger:hover {
+  color: var(--late);
+}
+
+.label-colors,
+.label-swatches {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.label-colors {
+  padding: 6px 4px;
+}
+
+.label-swatches {
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--label);
+}
+
+.swatch[aria-checked='true'] {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--label);
+}
+
+.swatch:focus-visible,
+.any-color:focus-within {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+/* After the palette: any color, from the browser's color picker */
+.any-color {
+  position: relative;
+  flex: none;
+  background: conic-gradient(#e5484d, #f5a524, #e2d33b, #46a758, #12a5b0, #3e63dd, #8e4ec6, #d6409f, #e5484d);
+  cursor: pointer;
+}
+
+.any-color.picked {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--label);
+}
+
+.any-color input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* "Edit label" on a label's page, with the editor under it */
+.edit-label {
+  position: relative;
+  flex: none;
+}
+
+.edit-label > button {
+  border: 1px solid var(--line);
+  padding: 2px 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.edit-label > button:hover,
+.edit-label > button[aria-expanded='true'] {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.edit-label .label-picker {
+  left: auto;
+  right: 0;
+}
+
+/* Settings */
+
+.settings-section {
+  margin-bottom: 32px;
+}
+
+.settings-section h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.settings-section fieldset {
+  margin: 0 0 18px;
+  padding: 0;
+  border: none;
+}
+
+.settings-section legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+/* The radio buttons themselves stay out of sight; their labels show the choice */
+.settings-section input[type='radio'] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mode-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.mode-options legend {
+  width: 100%;
+}
+
+.mode-options label {
+  padding: 4px 14px;
+  font-size: 14px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mode-options label:first-of-type {
+  border-radius: 8px 0 0 8px;
+}
+
+.mode-options label:last-of-type {
+  border-radius: 0 8px 8px 0;
+}
+
+.mode-options label:has(input:checked) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.theme-options legend {
+  grid-column: 1 / -1;
+}
+
+.theme-option,
+.font-option {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.theme-option:has(input:checked),
+.font-option:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.theme-option:has(input:focus-visible),
+.font-option:has(input:focus-visible),
+.mode-options label:has(input:focus-visible) {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* A thumbnail of the app: the left panel with a few calendar days, and a page */
+.theme-preview {
+  display: flex;
+  height: 64px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.theme-preview-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 9px);
+  align-content: start;
+  gap: 3px;
+  width: 44%;
+  padding: 8px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+}
+
+.theme-preview-cell {
+  height: 9px;
+  border-radius: 2px;
+  background: var(--cell);
+}
+
+.theme-preview-cell.l1 {
+  background: color-mix(in srgb, var(--accent) 30%, var(--cell));
+}
+
+.theme-preview-cell.l2 {
+  background: color-mix(in srgb, var(--accent) 55%, var(--cell));
+}
+
+.theme-preview-cell.l3 {
+  background: color-mix(in srgb, var(--accent) 78%, var(--cell));
+}
+
+.theme-preview-cell.l4 {
+  background: var(--accent);
+}
+
+.theme-preview-page {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  padding: 10px;
+}
+
+.theme-preview-kicker,
+.theme-preview-line {
+  height: 5px;
+  border-radius: 3px;
+}
+
+.theme-preview-kicker {
+  width: 40%;
+  background: var(--accent);
+}
+
+.theme-preview-line {
+  background: var(--text);
+  opacity: 0.55;
+}
+
+.theme-preview-line.short {
+  width: 65%;
+}
+
+.theme-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.font-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 10px;
+}
+
+.font-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 10px 14px;
+  font-family: var(--font);
+  font-size-adjust: var(--font-adjust);
+}
+
+.font-name {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.font-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.font-sample {
+  grid-column: 1 / -1;
+  font-size: 16px;
+}
+
+.server-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.server-form label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.server-row {
+  display: flex;
+  gap: 8px;
+}
+
+.server-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.server-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.server-row button {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.server-row button:disabled {
+  opacity: 0.6;
+}
+
+.server-form p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.server-ok {
+  color: var(--accent);
+}
+
+.server-error {
+  color: var(--late);
+}
+
+.settings-note {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Phone: the day fills the screen and the left panel slides over it */
+
+@media (max-width: 720px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  .splitter {
+    display: none;
+  }
+
+  .overview {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    padding: 14px 16px;
+    border-right: none;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform 0.2s ease,
+      visibility 0s linear 0.2s;
+  }
+
+  .app.overview-open .overview {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.2s ease;
+  }
+
+  .close-overview {
+    display: block;
+    padding: 0 6px;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--muted);
+  }
+
+  .day-page {
+    padding: 18px 16px 96px;
+  }
+
+  .day-header h1 {
+    font-size: 22px;
+  }
+
+  .theme-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .day-title::after {
+    content: ' ▾';
+    font-size: 0.7em;
+    color: var(--muted);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overview {
+    transition: none !important;
+  }
+}
