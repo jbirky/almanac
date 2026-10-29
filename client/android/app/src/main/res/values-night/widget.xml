@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Today widget's colors in dark mode: the app's dark Paper scheme. -->
+<resources>
+    <color name="widget_background">#1f1e1b</color>
+    <color name="widget_text">#ebe7e0</color>
+    <color name="widget_muted">#9b958b</color>
+    <color name="widget_accent">#6cbfa9</color>
+    <color name="widget_late">#e8836c</color>
+</resources>

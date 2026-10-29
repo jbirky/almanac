@@ -29,6 +29,28 @@ export function noteBoxes(doc) {
     });
 }
 
+// What a body links to, each list sorted: its task blocks ('embed') and the labels on its
+// notes boxes ('label'). Both editors keep a note's links to match (syncBodyLinks).
+export function linksInDoc(doc) {
+  const labels = new Set(noteBoxes(doc).map((box) => box.label).filter(Boolean));
+  return { embed: taskIdsInDoc(doc), label: [...labels].sort() };
+}
+
+// Ids of the task blocks in a body, sorted.
+export function taskIdsInDoc(doc) {
+  const ids = new Set();
+  const walkIds = (parent) => {
+    for (const child of parent.toArray()) {
+      if (!(child instanceof Y.XmlElement)) continue;
+      const id = child.getAttribute('id');
+      if (child.nodeName === 'taskRef' && id) ids.add(id);
+      else walkIds(child);
+    }
+  };
+  walkIds(doc.getXmlFragment(BODY_FIELD));
+  return [...ids].sort();
+}
+
 function walk(node, out) {
   if (node instanceof Y.XmlText) {
     for (const op of node.toDelta()) if (typeof op.insert === 'string') out.push(op.insert);

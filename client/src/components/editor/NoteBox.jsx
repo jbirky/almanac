@@ -4,7 +4,7 @@ import { Fragment, Slice } from '@tiptap/pm/model';
 import { Plugin, Selection, TextSelection } from '@tiptap/pm/state';
 import { dropPoint } from '@tiptap/pm/transform';
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
-import { LABEL_COLORS, NOTE_BOX, labelId, labelKey, newId } from '@almanac/shared';
+import { LABEL_COLORS, NOTE_BOX, newId, resolveLabel as resolveNamedLabel, sameLabel } from '@almanac/shared';
 import { action } from '../../lib/db.js';
 import { colorProps, readableShades } from '../../lib/color.js';
 import { isDark } from '../../lib/settings.js';
@@ -47,23 +47,9 @@ function moveBox(view, drag, event) {
   view.focus();
 }
 
-const sameLabel = (a, b) => {
-  const key = labelKey(a);
-  return key ? key === labelKey(b) : a.trim().toLowerCase() === b.trim().toLowerCase();
-};
-
 // The label a typed name refers to: an existing one whatever its case or spacing, else a new
 // one, created here. Blank means none.
-export function resolveLabel(text, labels = []) {
-  const name = text.trim();
-  if (!name) return null;
-  const existing = labels.find((l) => sameLabel(l.name, name));
-  if (existing) return existing.id;
-  // A label renamed since it was made still holds the id its old name gave it.
-  const id = labels.some((l) => l.id === labelId(name)) ? newId() : labelId(name);
-  action.createLabel({ id, name });
-  return id;
-}
+export const resolveLabel = (text, labels = []) => resolveNamedLabel(text, labels, (label) => action.createLabel(label));
 
 // Adds an empty notes box at the end of the journal and opens its label picker.
 export function addNoteBox(editor) {

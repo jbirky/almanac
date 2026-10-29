@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Tests the Android app in an emulator (needs /dev/kvm): a debug build that syncs with a
 # throwaway test server (scripts/test-server), driven by e2e/android.mjs next to a laptop in
-# Chromium. Leaves the emulator running for another go; `scripts/android/test stop` stops it.
+# Chromium, and its Today widget on the home screen. Leaves the emulator running for another go; `scripts/android/test stop` stops it.
 set -e
 cd "$(dirname "$0")/../.."
 if [ "$1" = "stop" ]; then docker rm -f almanac-emu >/dev/null 2>&1 || true; exit 0; fi
@@ -43,3 +43,4 @@ launch
 part 2
 adb reverse tcp:8790 tcp:8790 >/dev/null
 part 3
+part 4

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { normalizeServerUrl } from '@almanac/shared';
 import { setServer, syncNow } from '../lib/db.js';
 import { IS_APP, checkServer, serverUrl } from '../lib/server.js';
+import { pinWidget } from '../lib/widget.js';
 import { FONTS, FONT_KINDS, MODES, THEMES, setSetting, useSettings } from '../lib/settings.js';
 
 // A few calendar days, for each color scheme's preview.
@@ -102,11 +103,38 @@ export function SettingsPage({ views }) {
       </section>
 
       {IS_APP && <ServerSettings />}
+      {IS_APP && <WidgetSettings />}
 
       <p className="subtle settings-note">
         These are saved {IS_APP ? 'in this app' : 'in this browser'}, so each of your devices keeps its own.
       </p>
     </article>
+  );
+}
+
+// The Today widget, added to the home screen from here or from the home screen's own list of
+// widgets.
+function WidgetSettings() {
+  const [state, setState] = useState(null);
+  const add = async () => setState((await pinWidget()) ? 'asked' : 'unable');
+  return (
+    <section className="settings-section widget-settings" aria-labelledby="settings-widget">
+      <h2 id="settings-widget">Home screen</h2>
+      <p className="subtle">
+        The Today widget shows what’s due today and overdue, to check off there. It shows what this phone had the
+        last time Almanac was open; what you check off in it is checked off here, and synced, the next time you
+        open Almanac.
+      </p>
+      <button type="button" className="widget-add" onClick={add}>
+        Add the Today widget
+      </button>
+      {state === 'unable' && (
+        <p className="server-error" role="status">
+          This home screen can’t add it from here. Hold down on an empty part of the home screen, choose Widgets,
+          and find Almanac.
+        </p>
+      )}
+    </section>
   );
 }
 

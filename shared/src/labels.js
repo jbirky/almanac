@@ -21,3 +21,23 @@ export function labelId(name) {
   const key = labelKey(name);
   return key ? `label-${key}` : newId();
 }
+
+// Whether two names are the same label (see labelKey). Names with nothing labelKey keeps, such
+// as "!!!", compare as typed, ignoring case.
+export function sameLabel(a, b) {
+  const key = labelKey(a);
+  return key ? key === labelKey(b) : a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+// The label a typed name refers to: an existing one whatever its case or spacing, else a new
+// one, made with `create({ id, name })`. Blank means none.
+export function resolveLabel(text, labels, create) {
+  const name = text.trim();
+  if (!name) return null;
+  const existing = labels.find((l) => sameLabel(l.name, name));
+  if (existing) return existing.id;
+  // A label renamed since it was made still holds the id its old name gave it.
+  const id = labels.some((l) => l.id === labelId(name)) ? newId() : labelId(name);
+  create({ id, name });
+  return id;
+}

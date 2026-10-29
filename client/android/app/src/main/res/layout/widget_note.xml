@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A line in the Today widget in place of tasks, or after them: "Nothing due today", "+3 more". -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/note_text"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="4dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:textColor="@color/widget_muted"
+    android:textSize="13sp" />

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- How the Today widget looks, for the home screen's list of widgets. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="12dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/widget_today"
+        android:textColor="@color/widget_accent"
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:drawableStart="@drawable/widget_check_open"
+        android:drawablePadding="10dp"
+        android:gravity="center_vertical"
+        android:text="@string/widget_preview_one"
+        android:textColor="@color/widget_text"
+        android:textSize="14sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:drawableStart="@drawable/widget_check_done"
+        android:drawablePadding="10dp"
+        android:gravity="center_vertical"
+        android:text="@string/widget_preview_two"
+        android:textColor="@color/widget_muted"
+        android:textSize="14sp" />
+</LinearLayout>

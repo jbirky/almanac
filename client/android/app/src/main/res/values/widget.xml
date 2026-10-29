@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Today widget's colors (the app's Paper scheme; values-night has its dark ones) and words. -->
+<resources>
+    <color name="widget_background">#fbfaf8</color>
+    <color name="widget_text">#1f1d1a</color>
+    <color name="widget_muted">#68635b</color>
+    <color name="widget_accent">#2b685b</color>
+    <color name="widget_late">#b4442f</color>
+
+    <string name="widget_label">Today’s tasks</string>
+    <string name="widget_description">What’s due today and overdue, to check off</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_add">Add a task</string>
+    <string name="widget_overdue">Overdue</string>
+    <string name="widget_nothing_due">Nothing due today.</string>
+    <string name="widget_open_once">Open Almanac once to show today’s tasks here.</string>
+    <string name="widget_untitled">Untitled task</string>
+    <string name="widget_updated">updated %1$s</string>
+    <string name="widget_checked">%1$s, checked off. Tap to take it back.</string>
+    <string name="widget_unchecked">Check off %1$s</string>
+    <string name="widget_preview_one">Send slides to the group</string>
+    <string name="widget_preview_two">Call the observatory</string>
+    <plurals name="widget_more">
+        <item quantity="one">+%d more</item>
+        <item quantity="other">+%d more</item>
+    </plurals>
+</resources>

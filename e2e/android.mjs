@@ -4,6 +4,8 @@
 //   1  sync both ways, and the server address in Settings
 //   2  (restarted, server out of reach) the data is still on the phone; write offline
 //   3  (server back) what was written offline reaches the laptop
+//   4  the Today widget: added from Settings, it shows what's due, checks a task off, which the
+//      app checks off too when it opens, and its + opens the task box
 import { _android as android, chromium, expect } from '@playwright/test';
 
 const URL = 'http://127.0.0.1:8790/';
@@ -98,6 +100,63 @@ if (part === '3') {
   await syncNow(laptop);
   await expect(laptop.locator('.prose')).toContainText('Then the tunnel dropped.', { timeout: 5000 });
   step('with the server back, what was written offline reaches the laptop');
+}
+
+// The home screen's views as uiautomator reads them, each { text, desc, res, x, y } (its middle),
+// and taps on them, without Playwright's Android driver.
+async function views() {
+  const xml = (await device.shell('uiautomator dump /dev/tty')).toString();
+  const attr = (node, name) => (new RegExp(` ${name}="([^"]*)"`).exec(node)?.[1] ?? '').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+  return [...xml.matchAll(/<node [^>]*>/g)].map(([node]) => {
+    const [x1, y1, x2, y2] = attr(node, 'bounds').match(/\d+/g).map(Number);
+    return { text: attr(node, 'text'), desc: attr(node, 'content-desc'), res: attr(node, 'resource-id'), x: (x1 + x2) >> 1, y: (y1 + y2) >> 1 };
+  });
+}
+const matches = (view, want) => Object.entries(want).every(([key, value]) => view[key] === value);
+async function waitFor(want, timeout = 15000) {
+  for (const end = Date.now() + timeout; Date.now() < end; await new Promise((r) => setTimeout(r, 500))) {
+    const found = (await views()).find((v) => matches(v, want));
+    if (found) return found;
+  }
+  throw new Error(`Nothing on screen matches ${JSON.stringify(want)}`);
+}
+async function tapOn(want) {
+  const { x, y } = await waitFor(want);
+  await device.shell(`input tap ${x} ${y}`);
+}
+const home = () => device.shell('input keyevent KEYCODE_HOME');
+
+if (part === '4') {
+  // A title of its own, so a run after one that stopped partway finds its own task.
+  const title = `water the plants ${Date.now().toString(36).slice(-4)}`;
+  await laptop.getByLabel('New task').fill(`${title} today`);
+  await laptop.getByLabel('New task').press('Enter');
+  await syncNow(laptop);
+  await syncNow(app);
+
+  await app.getByRole('link', { name: 'Settings' }).click();
+  await app.getByRole('button', { name: 'Add the Today widget' }).click();
+  await tapOn({ text: 'Add to home screen' });
+  await home();
+  await waitFor({ text: title, res: 'app.almanac:id/task_title' });
+  await device.screenshot({ path: `${OUT}/android-4-widget.png` });
+  step('Settings adds the Today widget to the home screen, showing what the app has due today');
+
+  await tapOn({ desc: `Check off ${title}` });
+  await waitFor({ desc: `${title}, checked off. Tap to take it back.` });
+  await device.screenshot({ path: `${OUT}/android-5-widget-checked.png` });
+  // Its title opens its day in the app, which checks it off there and syncs it.
+  await tapOn({ text: title, res: 'app.almanac:id/task_title' });
+  await expect(app.locator('.due-panel .task-row', { hasText: title }).locator('input[type="checkbox"]')).toBeChecked({ timeout: 10000 });
+  await syncNow(app);
+  await syncNow(laptop);
+  await expect(laptop.locator('.overview .task-row', { hasText: title })).toHaveCount(0, { timeout: 5000 });
+  step('a task checked off in the widget is checked off in the app when it opens, and reaches the laptop');
+
+  await home();
+  await tapOn({ res: 'app.almanac:id/widget_add' });
+  await expect(app.getByLabel('New task')).toBeFocused({ timeout: 10000 });
+  step("the widget's + opens the app's task box");
 }
 
 await browser.close();

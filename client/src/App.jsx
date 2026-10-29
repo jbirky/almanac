@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { localDate } from '@almanac/shared';
 import { Notices } from './components/Notices.jsx';
 import { PANEL, Splitter } from './components/Splitter.jsx';
 import { ViewSwitch } from './components/ViewSwitch.jsx';
@@ -7,6 +8,7 @@ import { LabelPage, pickLabel } from './views/LabelPage.jsx';
 import { Overview } from './views/Overview.jsx';
 import { SettingsPage } from './views/SettingsPage.jsx';
 import { navigate, useQuery, useRoute, useToday } from './lib/hooks.js';
+import { startWidget } from './lib/widget.js';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -75,6 +77,18 @@ export function App() {
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
   }, [showOverview]);
+
+  // The Android app's Today widget: its + opens the task box, and a task in it opens its day.
+  useEffect(
+    () =>
+      startWidget({
+        onOpen: ({ place, date }) => {
+          if (place === 'add') showOverview(() => addRef.current);
+          else if (date) navigate(date === localDate() ? '/' : `/${date}`);
+        },
+      }),
+    [showOverview],
+  );
 
   const showCalendar = () => showOverview(() => document.querySelector('.heatmap .cell[aria-current]'));
   const views = (
