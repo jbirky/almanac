@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import Database from 'better-sqlite3';
 import { TABLES, adaptBetterSqlite, createActions, createCore, createQueries, createSyncer } from '@almanac/shared';
+import { createBodies } from './journal/bodies.js';
 
 const SYNC_DELAY_MS = 800;
 const SYNC_INTERVAL_MS = 15_000;
@@ -216,6 +217,7 @@ export function openReplica({ paths, server, fetch = globalThis.fetch, requireLo
     },
     close() {
       if (closed) return;
+      if (!status.readOnly) replica.bodies.flushAll();
       closed = true;
       clearTimeout(syncTimer);
       clearInterval(interval);
@@ -224,5 +226,7 @@ export function openReplica({ paths, server, fetch = globalThis.fetch, requireLo
       lock?.close();
     },
   };
+  // Journal bodies being edited, as live documents (see bodies.js).
+  replica.bodies = createBodies(replica);
   return replica;
 }

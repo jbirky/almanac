@@ -12,7 +12,7 @@ import { locations } from '../src/config.js';
 // Where a test's copy, lock, socket and settings go: a directory of its own, removed by `done`.
 export function tempPaths() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'almanac-tui-'));
-  const env = { XDG_DATA_HOME: path.join(dir, 'data'), XDG_CONFIG_HOME: path.join(dir, 'config') };
+  const env = { XDG_DATA_HOME: path.join(dir, 'data'), XDG_CONFIG_HOME: path.join(dir, 'config'), XDG_CACHE_HOME: path.join(dir, 'cache') };
   return { ...locations(env), env, root: dir, done: () => fs.rmSync(dir, { recursive: true, force: true }) };
 }
 
@@ -163,4 +163,7 @@ export const KEYS = {
   end: '\x1b[F',
   altUp: '\x1b[1;3A',
   altDown: '\x1b[1;3B',
+  ctrlR: '\x12',
+  ctrlU: '\x15',
+  left: '\x1b[D',
 };

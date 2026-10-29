@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { localDate } from '@almanac/shared';
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
+import { journalId, localDate } from '@almanac/shared';
 
 export const ReplicaContext = createContext(null);
 export const useReplica = () => useContext(ReplicaContext);
@@ -32,6 +32,42 @@ export function useQuery(name, args = [], tables = TABLES) {
   // `key` stands for `args`.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => replica.queries[name](...args), [replica, name, key, version]);
+}
+
+// The journals of `dates` open for editing (see journal/bodies.js), as a Map of date to session,
+// drawn again as any of them changes, here or on another device. A journal no longer asked for is
+// let go once the screen stops showing it.
+export function useJournals(dates) {
+  const replica = useReplica();
+  const held = useRef(new Map());
+  const [, redraw] = useReducer((n) => n + 1, 0);
+  // Opened as they're asked for, so they draw at once.
+  for (const date of dates) {
+    if (held.current.has(date)) continue;
+    const session = replica.bodies.open(journalId(date), () => replica.act('ensureJournal', date));
+    held.current.set(date, { session, off: session.subscribe(redraw) });
+  }
+  const key = dates.join(' ');
+  useEffect(() => {
+    const wanted = new Set(key.split(' '));
+    for (const [date, { session, off }] of held.current) {
+      if (wanted.has(date)) continue;
+      off();
+      session.release();
+      held.current.delete(date);
+    }
+  }, [key]);
+  useEffect(
+    () => () => {
+      for (const { session, off } of held.current.values()) {
+        off();
+        session.release();
+      }
+      held.current.clear();
+    },
+    [],
+  );
+  return new Map(dates.map((date) => [date, held.current.get(date).session]));
 }
 
 export function useSyncStatus() {

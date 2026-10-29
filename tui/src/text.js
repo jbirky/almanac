@@ -9,8 +9,17 @@ export const width = (text) => stringWidth(text);
 export const lineWidth = (line) => line.reduce((n, piece) => n + width(piece.text), 0);
 export const piece = (text, style = {}) => ({ text, ...style });
 
+// A piece can be `raw`: text with its own colors in it, such as a line of an image, which keeps
+// them rather than taking the row's background.
 const sameStyle = (a, b) =>
-  a.fg === b.fg && a.bg === b.bg && a.bold === b.bold && a.italic === b.italic && a.underline === b.underline && a.strike === b.strike && a.inverse === b.inverse;
+  a.fg === b.fg &&
+  a.bg === b.bg &&
+  a.bold === b.bold &&
+  a.italic === b.italic &&
+  a.underline === b.underline &&
+  a.strike === b.strike &&
+  a.inverse === b.inverse &&
+  a.raw === b.raw;
 
 // Neighbouring pieces in one style as one piece.
 function merge(line) {
@@ -50,7 +59,7 @@ export function truncate(line, max, ellipsis = '…') {
 // background of every piece that has none of its own.
 export function fit(line, w, bg) {
   const cut = truncate(line, w);
-  const out = bg ? cut.map((p) => (p.bg ? p : { ...p, bg })) : [...cut];
+  const out = bg ? cut.map((p) => (p.bg || p.raw ? p : { ...p, bg })) : [...cut];
   const pad = w - lineWidth(cut);
   if (pad > 0) out.push({ text: ' '.repeat(pad), bg });
   return merge(out);

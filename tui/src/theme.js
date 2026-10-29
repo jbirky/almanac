@@ -49,6 +49,9 @@ export function makeTheme({ background = null, mode = null, scheme = 'paper', le
   return {
     dark,
     tints,
+    // The terminal's background and color depth, which images are drawn for.
+    bg,
+    level,
     text: base.text,
     muted: base.muted,
     faint: mix(bg, base.muted, 0.6),

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
+import path from 'node:path';
 import { createElement as h } from 'react';
 import { render } from 'ink';
 import chalk from 'chalk';
 import Database from 'better-sqlite3';
-import { adaptBetterSqlite, createQueries, localDate, normalizeServerUrl, relativeDay } from '@almanac/shared';
-import { addTask, dayReport, describeTask } from './commands.js';
+import { adaptBetterSqlite, createQueries, fullDay, localDate, normalizeServerUrl, relativeDay } from '@almanac/shared';
+import { addTask, attachFiles, dayReport, describeTask, fileSize, logText } from './commands.js';
 import { checkServer, locations, readConfig, writeConfig } from './config.js';
 import { askRunning, serveControl } from './control.js';
 import { ReplicaContext } from './hooks.js';
@@ -20,13 +21,15 @@ const USAGE = `Almanac in the terminal: your journal and tasks, kept on this mac
   almanac                  the full-screen journal and tasks
   almanac add "<text>"     add a task, read as the task box reads it: "submit abstract fri #paper"
   almanac today [--json]   what's due today, what's overdue, and what got finished
+  almanac log "<text>"     a paragraph at the end of today's journal (or text piped in)
+  almanac attach <image>   an image at the end of today's journal, made smaller as the web does
   almanac sync             sync now, and say how it went
 
   --server <address>       the server to sync with, such as https://<host>.<tailnet>.ts.net:8787.
                            Needed the first time; it's kept in ~/.config/almanac/config.json.
 `;
 
-const COMMANDS = ['add', 'today', 'sync'];
+const COMMANDS = ['add', 'today', 'log', 'attach', 'sync'];
 
 class Failure extends Error {}
 
@@ -83,9 +86,18 @@ const controlHandler = (replica) => async (request) => {
   if (request.cmd === 'add') {
     return { task: addTask(replica, request.text) };
   }
+  if (request.cmd === 'log') return { date: logText(replica, request.text, request.date) };
+  if (request.cmd === 'attach') return { images: await attachFiles(replica, request.files, request.date) };
   if (request.cmd === 'sync') return { status: await replica.sync() };
   throw new Error(`Unknown request ${request.cmd}`);
 };
+
+async function readAll(stream) {
+  let text = '';
+  stream.setEncoding('utf8');
+  for await (const chunk of stream) text += chunk;
+  return text;
+}
 
 function todayText(report, today) {
   const width = Math.min(process.stdout.columns || 80, 96);
@@ -146,6 +158,13 @@ async function runTui(paths, server) {
   const stop = () => ink.unmount();
   process.on('SIGTERM', stop);
   process.on('SIGHUP', stop);
+  // The terminal closed under it: there's nothing to draw on, and what was written is saved as
+  // it stops.
+  const gone = (err) => {
+    if (err.code !== 'EIO' && err.code !== 'EPIPE') throw err;
+  };
+  process.stdout.on('error', gone);
+  process.stdin.on('error', gone);
   try {
     await ink.waitUntilExit();
   } finally {
@@ -202,6 +221,41 @@ async function main(argv) {
       }
     });
     console.log(`Added ${describeTask(task, today)}${task.isNew ? ' (a new category)' : ''}`);
+    if (status && !syncReport(status, server).ok) console.log('It’s saved on this machine, and goes to the server with the next sync.');
+    return;
+  }
+
+  if (command === 'log') {
+    let text = rest.join(' ');
+    if (!text.trim() && !process.stdin.isTTY) text = await readAll(process.stdin);
+    if (!text.trim()) throw new Failure('Give the text to log: almanac log "Asked about the new PSF."');
+    const { status } = await withCopy(paths, server, { cmd: 'log', text, date: today }, async (replica) => {
+      try {
+        logText(replica, text, today);
+        return { status: await replica.sync() };
+      } catch (err) {
+        throw new Failure(err.message);
+      }
+    });
+    console.log(`Added to ${fullDay(today, today)}.`);
+    if (status && !syncReport(status, server).ok) console.log('It’s saved on this machine, and goes to the server with the next sync.');
+    return;
+  }
+
+  if (command === 'attach') {
+    if (!rest.length) throw new Failure('Give the image to add: almanac attach plot.png');
+    const files = rest.map((file) => path.resolve(file));
+    const { images, status } = await withCopy(paths, server, { cmd: 'attach', files, date: today }, async (replica) => {
+      try {
+        return { images: await attachFiles(replica, files, today), status: await replica.sync() };
+      } catch (err) {
+        throw new Failure(err.message);
+      }
+    });
+    for (const image of images) {
+      const name = image.alt ? `“${image.alt}”` : image.name;
+      console.log(`Added ${name}${image.smaller ? ', made smaller' : ''} (${image.width} × ${image.height}, ${fileSize(image.size)}) to ${fullDay(today, today)}.`);
+    }
     if (status && !syncReport(status, server).ok) console.log('It’s saved on this machine, and goes to the server with the next sync.');
     return;
   }

@@ -3,8 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 // Where this machine keeps its copy and its settings, in the usual places: the copy, its lock and
-// the socket other commands reach the running TUI by under ~/.local/share/almanac, and the
-// settings in ~/.config/almanac/config.json.
+// the socket other commands reach the running TUI by under ~/.local/share/almanac, the settings in
+// ~/.config/almanac/config.json, and images opened in a viewer under ~/.cache/almanac/images.
 export function locations(env = process.env) {
   const home = os.homedir();
   const dir = path.join(env.XDG_DATA_HOME || path.join(home, '.local', 'share'), 'almanac');
@@ -16,6 +16,7 @@ export function locations(env = process.env) {
     // This machine's own conveniences: the left pane's width, which tasks show their subtasks.
     state: path.join(dir, 'state.json'),
     config: path.join(env.XDG_CONFIG_HOME || path.join(home, '.config'), 'almanac', 'config.json'),
+    images: path.join(env.XDG_CACHE_HOME || path.join(home, '.cache'), 'almanac', 'images'),
   };
 }
 

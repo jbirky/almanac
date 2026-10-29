@@ -218,10 +218,13 @@ describe('reading a day’s journal', () => {
     const plain = (b) => b.inline.map((i) => (i.math !== undefined ? `$${i.math}$` : i.text)).join('');
     expect(read.map((b) => b.kind)).toEqual(['text', 'text', 'text', 'text', 'text', 'text', 'task', 'box', 'math', 'text', 'rule', 'image', 'text']);
     expect(read[0].inline).toEqual([
-      { text: 'Discussed ', marks: {} },
-      { text: 'priors', marks: { italic: {} } },
-      { text: ' for the fits.', marks: {} },
+      { text: 'Discussed ', marks: {}, from: 0 },
+      { text: 'priors', marks: { italic: {} }, from: 10 },
+      { text: ' for the fits.', marks: {}, from: 16 },
     ]);
+    // Each block has its element, and a key that stays while the element does.
+    expect(read[0].el.nodeName).toBe('paragraph');
+    expect(new Set(read.map((b) => b.key)).size).toBe(read.length);
     expect(read[1]).toMatchObject({ style: 'heading', level: 2 });
     expect(read.slice(2, 6).map((b) => [b.marker, b.indent, plain(b)])).toEqual([
       ['•', 0, 'first point'],
@@ -229,12 +232,13 @@ describe('reading a day’s journal', () => {
       ['•', 1, 'nested'],
       ['3.', 0, 'third'],
     ]);
-    expect(read[6]).toEqual({ kind: 'task', id: 'task-1' });
+    expect(read[6]).toMatchObject({ kind: 'task', id: 'task-1' });
     expect(read[7]).toMatchObject({ kind: 'box', id: 'box-1', label: 'label-meeting' });
     expect(read[7].blocks.map(plain)).toEqual(['Group meeting', 'Agreed on $\\sigma = 0.3$.']);
-    expect(read[8]).toEqual({ kind: 'math', latex: '\\int_0^1 x^2\\,dx' });
+    expect(read[8]).toMatchObject({ kind: 'math', latex: '\\int_0^1 x^2\\,dx' });
     expect(read[9]).toMatchObject({ quote: 1 });
     expect(read[11]).toMatchObject({ kind: 'image', file: 'file-1', alt: 'plot', width: 800, height: 600 });
     expect(plain(read[12])).toBe('from a newer version');
+    expect(read[12].editable).toBe(false);
   });
 });
