@@ -244,7 +244,7 @@ describe('the full-screen app', () => {
     await app.see('Make the terminal at least 40 × 16');
   });
 
-  it('goes between the boxes in a column with J and K, and between the columns with h and l', async () => {
+  it('goes between the boxes in a column with J and K, and between the columns with H and L', async () => {
     const { replica, paths } = seededCopy();
     const app = renderApp(replica, paths);
     await app.see('Due today');
@@ -269,7 +269,7 @@ describe('the full-screen app', () => {
     await app.press('K', 'K');
     await vi.waitFor(() => expect(app.cursorLine('journal')).toBe(due));
 
-    await app.press('h');
+    await app.press('H');
     await mode('TASKS');
     await on('tasks', 'meeting');
     await app.press('J');
@@ -279,9 +279,14 @@ describe('the full-screen app', () => {
     await app.press('J');
     await mode('TASKS');
     await on('tasks', 'meeting');
-    await app.press('l');
+    await app.press('L');
     await mode('JOURNAL');
     expect(app.cursorLine('journal')).toBe(due);
+    // L goes over from the calendar too, where h and l still go a week back or ahead.
+    await app.press(KEYS.tab);
+    await mode('CALENDAR');
+    await app.press('L');
+    await mode('JOURNAL');
   });
 
   it('shows one pane at a time when narrow, the journal first, and Tab brings the others over it', async () => {
@@ -337,6 +342,30 @@ describe('writing in the journal', () => {
       `<paragraph>Notes for <bold>tomorrow</bold>.</paragraph><notebox id="${/id="([^"]+)"/.exec(storedDay(replica, tomorrow).split('<notebox ')[1])[1]}" label="${meeting.id}"><paragraph>Prep the slides</paragraph><taskref id="${outline.id}"></taskref><taskref id="${round.id}"></taskref></notebox><paragraph>Done.</paragraph>`,
     );
     expect(replica.queries.taskDay(outline.id)).toBe(tomorrow);
+  });
+
+  it('moves the cursor through a block’s text with h and l, and writes there with i', async () => {
+    const { replica, paths, ids, today } = seededCopy();
+    const app = renderApp(replica, paths);
+    await app.see('Due today');
+    await app.cursorTo('journal', 'Discussed priors for the fits.');
+    // From the end back to before "fits.", one too far, and on again.
+    await app.press('h', 'h', 'h', 'h', 'h', 'h', 'l', 'i');
+    await app.see('WRITE');
+    await app.press('big ', KEYS.escape);
+    await app.see('JOURNAL');
+    expect(app.cursorLine('journal')).toContain('Discussed priors for the big fits.');
+    expect(storedDay(replica, today)).toContain(' for the big fits.</paragraph>');
+    // Esc leaves the cursor where the writing stopped.
+    await app.press('h', 'i', 'X', KEYS.escape);
+    await app.see('for the bigX fits.');
+
+    // In a task, its title.
+    await app.cursorTo('journal', 'Email the priors');
+    await app.press('h', 'h', 'h', 'h', 'h', 'h', 'i');
+    await app.see('WRITE');
+    await app.press('new ', KEYS.escape);
+    await vi.waitFor(() => expect(replica.queries.task(ids.priors).title).toBe('Email the new priors'));
   });
 
   it('moves a block into a box, deletes a task where it\'s written, and undoes both', async () => {

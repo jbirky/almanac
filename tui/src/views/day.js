@@ -1,7 +1,8 @@
 import { addDays, eventTime, fullDay, shortDay } from '@almanac/shared';
+import { textLength } from '../journal/doc.js';
 import { layoutText } from '../journal/layout.js';
 import { latexToUnicode } from '../journal/math.js';
-import { lineWidth, piece, spread, truncate, width, wrap } from '../text.js';
+import { graphemes, lineWidth, piece, spread, truncate, width, wrap } from '../text.js';
 import { subtaskLine, taskLine } from './rows.js';
 
 const NEAR = { [-1]: 'YESTERDAY', 0: 'TODAY', 1: 'TOMORROW' };
@@ -13,7 +14,8 @@ const NEAR = { [-1]: 'YESTERDAY', 0: 'TODAY', 1: 'TOMORROW' };
 // rows). A row of a textblock's text has `text`: { el, from, to, x, cols }, the places on it and
 // their columns (x is where the text starts), for the cursor to move by. `ctx.typed(key, w)`
 // gives the pieces of what's being typed at a stop, if anything is, and `ctx.caret` is the cursor
-// while writing in the journal: { el, offset }, or { pending } in an empty one.
+// while writing in the journal: { el, offset }, or { pending } in an empty one. While browsing it,
+// `ctx.point(key, end)` is where the cursor is in the text of the block at stop `key`, `end` long.
 //
 // A block's stop is `blk:<its day>:<its key>`, its data { kind, block, own, date, boxOnly }: `own`
 // when it can be written in, `date` the day whose journal it's in, and `boxOnly` when it's shown
@@ -133,8 +135,9 @@ const tight = (a, b) => (a.kind === 'task' && b.kind === 'task') || (a.kind === 
 // each row (the Due panel's indent, a box's bar) and `w` is what's left after it.
 export function taskRows(ctx, rows, key, task, { w, lead = [], margin = 0, bg, data = {}, quietCategory = false }) {
   const { theme, today, day } = ctx;
+  const point = data.own && ctx.cursor === key && ctx.point ? ctx.point(key, graphemes(task.title ?? '').length) : null;
   rows.push({
-    line: [...lead, ...taskLine(task, { w, theme, today, day, quietCategory, cursor: ctx.cursor === key, title: ctx.typed(`${key}#title`, w - 4) })],
+    line: [...lead, ...taskLine(task, { w, theme, today, day, quietCategory, cursor: ctx.cursor === key, title: ctx.typed(`${key}#title`, w - 4), point })],
     margin,
     bg,
     stop: key,
@@ -240,10 +243,11 @@ function textRows(ctx, rows, key, block, { margin, w, lead, bg, own, date, boxOn
         ? { bg: theme.chip }
         : {};
   const has = (part, mark) => part.marks?.[mark] !== undefined || undefined;
-  const caret = own && ctx.caret?.el === block.el ? ctx.caret.offset : null;
-  // A formula as Unicode if it can be, and as its LaTeX while the cursor is beside it.
+  const writing = own && ctx.caret?.el === block.el ? ctx.caret.offset : null;
+  const caret = writing ?? (own && block.editable && ctx.cursor === key && ctx.point ? ctx.point(key, textLength(block.el)) : null);
+  // A formula as Unicode if it can be, and as its LaTeX while writing beside it.
   const formula = (part) => {
-    const unicode = caret === part.from || caret === part.from + 1 ? null : latexToUnicode(part.math);
+    const unicode = writing === part.from || writing === part.from + 1 ? null : latexToUnicode(part.math);
     return unicode ? { text: unicode, style: { fg: theme.math, italic: true } } : { text: `$${part.math}$`, style: { fg: theme.math } };
   };
   const parts = block.inline.map((part) =>

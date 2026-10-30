@@ -2,7 +2,7 @@ import { piece, wrap } from '../text.js';
 
 const EVERYWHERE = [
   ['Tab  Shift+Tab', 'Next or previous pane: calendar, tasks, journal'],
-  ['h  l', 'The column to the left or right: tasks, journal. In the calendar, a week.'],
+  ['H  L', 'The column to the left or right: tasks, journal'],
   ['J  K', 'Next or previous box: the Due panel, a notes box, a category; above the tasks, the calendar'],
   ['Ctrl+K  a', 'Add a task, in the box above the list'],
   ['/', 'Search. Esc clears it.'],
@@ -43,7 +43,8 @@ const SEARCH = [
 
 const JOURNAL = [
   ['j  k', 'Next or previous block'],
-  ['i  Enter', 'Write in this block (in a task, its title)'],
+  ['h  l', 'Move the cursor through the block’s text (in a task, its title)'],
+  ['i  Enter', 'Write there. Until h or l moves it, the cursor is at the end.'],
   ['o  O', 'New line below or above, and write'],
   ['Alt+↑  Alt+↓', "Move the block, into and out of notes boxes; on a box's label, the box"],
   ['n', 'New notes box: pick or make its label'],

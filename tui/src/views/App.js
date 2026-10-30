@@ -28,7 +28,7 @@ import { insertBox, isBox, isElement, newParagraph, textLength, unwrapBox } from
 import * as edits from '../journal/edit.js';
 import { keyOf, readJournal } from '../journal/layout.js';
 import { ReadOnlyError } from '../replica.js';
-import { fit, piece, spread } from '../text.js';
+import { fit, graphemes, piece, spread } from '../text.js';
 import { calendarLines, calendarStart, calendarWeeks, describeDay } from './calendar.js';
 import { dayRows } from './day.js';
 import { helpRows } from './help.js';
@@ -217,6 +217,10 @@ export function App({ theme, paths }) {
       // Yjs relative position, the formatting the next character gets, and the column ↑ and ↓ keep
       // to; or { date, pending } in an empty one, which gets its first paragraph with the first key.
       write: null,
+      // Browsing the journal, where the cursor is in the text of the block it's on, for h and l
+      // to move and i to write at: { key, offset }, the block's stop and the place in it (in a
+      // task, a grapheme of its title). At the end until it's moved.
+      point: null,
       notice: null,
       help: false,
       undo: null,
@@ -304,6 +308,11 @@ export function App({ theme, paths }) {
 
   // The journal pane's cursor: its own for each view.
   const rightName = byLabel ? 'label' : 'journal';
+  // Where the cursor is in the text of the block at stop `key`, `end` long (see `point`).
+  const pointIn = (key, end) => {
+    const { point } = store.current;
+    return point?.key === key ? Math.min(point.offset, end) : end;
+  };
   // A block's stop in the journal pane (see dayRows).
   const stopOf = (node) => `blk:${dateOf(node)}:${keyOf(node)}`;
 
@@ -453,8 +462,9 @@ export function App({ theme, paths }) {
       ? resultRows({ ...base, w: lw - 2 }, results)
       : taskListRows({ ...base, w: lw - 2, day: null, cursor: s.pane === 'tasks' ? cursor : null }, groups),
   );
+  const browsing = s.pane === 'journal' && !s.write && !s.input && !s.help;
   const makeJournal = (cursor) => {
-    const here = { ...base, w: rw - 1, narrow, cursor: s.pane === 'journal' ? cursor : null, caret };
+    const here = { ...base, w: rw - 1, narrow, cursor: s.pane === 'journal' ? cursor : null, caret, point: browsing ? pointIn : null };
     if (s.help) return helpRows(s.pane, searching, theme, s.view, rw - 1);
     if (byLabel) return labelRows({ ...here, label, labelList, days: labelSections, more: allLabelDays.length - shownLabelDays.length });
     return dayRows({ ...here, day: s.day, dueTasks, calendars, events, pinned, blocks });
@@ -569,7 +579,8 @@ export function App({ theme, paths }) {
   const moveCaret = (at, goal = null) => set({ write: { date: dateOf(at.el), rel: caretToRel(at), marks: null, goal } });
   const browseAt = (node) => set({ write: null, input: null, cursor: { ...store.current.cursor, [rightName]: stopOf(node) } });
 
-  // A task block's title, to type in: at its 'start' or 'end', with `rest` typed after it.
+  // A task block's title, to type in: at its 'start' or 'end' (or a grapheme in it), with `rest`
+  // typed after it.
   const startTitle = (taskEl, at = 'end', rest = '') => {
     const id = taskEl.getAttribute('id');
     const task = id ? replica.queries.task(id) : null;
@@ -580,6 +591,7 @@ export function App({ theme, paths }) {
     }
     const line = lineInput((task.title ?? '') + rest);
     if (at === 'start') line.pos = 0;
+    else if (typeof at === 'number') line.pos = Math.min(at, line.chars.length);
     set({
       write: null,
       input: { kind: 'title', key: `${stop}#title`, stop, line, target: { id, el: taskEl, date: dateOf(taskEl), title: task.title ?? '' }, choice: 0, pane: 'journal' },
@@ -658,8 +670,11 @@ export function App({ theme, paths }) {
   const writeKey = (ch, key) => {
     const st = store.current;
     if (key.escape) {
-      sessionFor(st.write.date)?.stopCapturing();
-      return set({ write: null });
+      const session = sessionFor(st.write.date);
+      session?.stopCapturing();
+      // Browsing goes on from where the writing stopped.
+      const at = st.write.pending || !session ? null : caretFromRel(session.doc, st.write.rel);
+      return set({ write: null, point: at ? { key: stopOf(at.el), offset: at.offset } : null });
     }
     if (key.ctrl && ch === 'k') return startCapture();
     if (key.ctrl && ch === 's') {
@@ -705,7 +720,7 @@ export function App({ theme, paths }) {
     const text = inputText(st.line);
     if (key.escape) {
       saveTitle();
-      return set({ input: null });
+      return set({ input: null, point: { key: st.stop, offset: st.line.pos } });
     }
     if (key.ctrl && ch === 'k') {
       saveTitle();
@@ -816,15 +831,28 @@ export function App({ theme, paths }) {
       startInput({ kind: 'boxMenu', key: stop.key, target: { box: block, date } });
       return true;
     }
+    // h and l move the cursor through the block's text, or a task's title, for i to write at.
+    const titled = block.kind === 'task';
+    if ((ch === 'h' || ch === 'l') && (titled || (block.kind === 'text' && block.editable))) {
+      const end = titled ? titleLength(block) : textLength(el);
+      const at = pointIn(stop.key, end);
+      let offset;
+      if (ch === 'h') offset = titled ? Math.max(0, at - 1) : at > 0 ? edits.stepBack(el, at) : 0;
+      else offset = titled ? Math.min(end, at + 1) : at < end ? edits.stepAhead(el, at) : end;
+      set({ point: { key: stop.key, offset } });
+      return true;
+    }
     if (!key.return && ch !== 'i') return false;
     if (block.kind === 'image') showImage(block);
     else if (block.kind === 'text' && !block.editable) notice('This version can’t write in this block. Update Almanac to edit it.');
     else if (!writable() || block.kind === 'rule') return true;
-    else if (block.kind === 'task') startTitle(el, 'end');
+    else if (titled) startTitle(el, pointIn(stop.key, titleLength(block)));
     else if (block.kind === 'math') startInput({ kind: 'latex', key: `${stop.key}#latex`, stop: stop.key, line: lineInput(block.latex), target: { el, date } });
-    else writeAt({ el, offset: textLength(el) });
+    else writeAt({ el, offset: pointIn(stop.key, textLength(el)) });
     return true;
   };
+  // How many graphemes a task block's title has.
+  const titleLength = (block) => graphemes((block.id && replica.queries.task(block.id)?.title) || '').length;
 
   // Keys in the journal by label, before those for the block under the cursor. Returns true when
   // it took the key.
@@ -1123,10 +1151,11 @@ export function App({ theme, paths }) {
     }
     putCursor(name, stops[clamp(next, 0, stops.length - 1)]);
   };
-  // Puts pane `name`'s cursor on `stop`. By label, reaching the end shows older days.
+  // Puts pane `name`'s cursor on `stop`, at the end of its text. By label, reaching the end shows
+  // older days.
   const putCursor = (name, stop) => {
     const more = stop.key === 'label-more' ? { labelCount: store.current.labelCount + LABEL_PAGE } : {};
-    set({ cursor: { ...store.current.cursor, [name]: stop.key }, ...more });
+    set({ cursor: { ...store.current.cursor, [name]: stop.key }, point: null, ...more });
   };
 
   const handleKey = (ch, key) => {
@@ -1183,6 +1212,9 @@ export function App({ theme, paths }) {
     if (key.escape && st.query) return set({ query: '' });
     // When narrow, Esc puts the journal back over the calendar and tasks.
     if (key.escape && narrow && st.pane !== 'journal') return set({ pane: 'journal' });
+    // H and L go between the columns: the calendar and task list, and the journal.
+    if (ch === 'H' && st.pane === 'journal') return set({ pane: 'tasks' });
+    if (ch === 'L' && st.pane !== 'journal') return set({ pane: 'journal' });
 
     if (st.pane === 'calendar') {
       const step = key.leftArrow || ch === 'h' ? -7 : key.rightArrow || ch === 'l' ? 7 : key.upArrow || ch === 'k' ? -1 : key.downArrow || ch === 'j' ? 1 : 0;
@@ -1197,11 +1229,8 @@ export function App({ theme, paths }) {
     const stop = target.model.stop;
     const data = stop?.data;
     if (st.pane === 'journal' && stop && blockKey(ch, key, stop) !== false) return undefined;
-    // h and l go between the columns, the task list and the journal. J and K go between the boxes
-    // in one: the journal's Due panel, notes boxes and the lines between them, the list's
-    // categories, and from the top of the list, the calendar above it.
-    if (ch === 'h' && st.pane === 'journal') return set({ pane: 'tasks' });
-    if (ch === 'l' && st.pane === 'tasks') return set({ pane: 'journal' });
+    // J and K go between the boxes in a column: the journal's Due panel, notes boxes and the lines
+    // between them, the list's categories, and from the top of the list, the calendar above it.
     if (ch === 'J' || ch === 'K') {
       const next = sectionStop(target.model.stops, stop, ch === 'J' ? 1 : -1);
       if (next) return putCursor(target.name, next);

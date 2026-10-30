@@ -52,6 +52,14 @@ describe('a task’s line', () => {
     expect(text(taskLine(due, { w: 50, theme, today, day: today, cursor: true }))).toContain('Today');
   });
 
+  it('marks where the cursor is in the title while browsing, after the end when it’s there', () => {
+    const line = taskLine(task('tidy the desk'), { w: 40, theme, today, point: 5 });
+    expect(lineWidth(line)).toBe(40);
+    expect(text(line)).toMatch(/^\[ \] tidy the desk\s*$/);
+    expect(line.filter((p) => p.inverse)).toEqual([expect.objectContaining({ text: 't' })]);
+    expect(taskLine(task('tidy'), { w: 40, theme, today, point: 4 }).filter((p) => p.inverse)).toEqual([expect.objectContaining({ text: ' ' })]);
+  });
+
   it('checks off a finished task and drops its date', () => {
     const line = taskLine(task('tidy the desk', { status: 'done', due: today }), { w: 40, theme, today });
     expect(text(line)).toMatch(/^\[x\] tidy the desk\s*$/);
