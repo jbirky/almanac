@@ -51,6 +51,21 @@ export function taskIdsInDoc(doc) {
   return [...ids].sort();
 }
 
+// Ids of the image files a body shows, sorted.
+export function fileIdsInDoc(doc) {
+  const ids = new Set();
+  const walkFiles = (parent) => {
+    for (const child of parent.toArray()) {
+      if (!(child instanceof Y.XmlElement)) continue;
+      const file = child.getAttribute('file');
+      if (child.nodeName === 'image' && file) ids.add(file);
+      else walkFiles(child);
+    }
+  };
+  walkFiles(doc.getXmlFragment(BODY_FIELD));
+  return [...ids].sort();
+}
+
 function walk(node, out) {
   if (node instanceof Y.XmlText) {
     for (const op of node.toDelta()) if (typeof op.insert === 'string') out.push(op.insert);

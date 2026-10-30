@@ -14,7 +14,8 @@ const sharp = async () => (loaded ??= (await import('sharp')).default);
 export class ImageError extends Error {}
 
 // The web's rules: a small image of a kind every browser shows is kept as it is, so a plot or a
-// screenshot stays sharp; a larger one is made smaller, as WebP; a GIF is kept whole or not at all.
+// screenshot stays sharp; a larger one is made smaller, as WebP; a GIF or an animated WebP is kept
+// whole or not at all.
 const KEEP_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif']);
 const KEEP_BYTES = 1.5 * 1024 * 1024;
 const MAX_SIDE = 2400;
@@ -36,7 +37,7 @@ export async function prepareImage(bytes, name) {
     throw new ImageError(`Couldn’t add “${name}”: it isn’t an image this can read.`);
   }
   const type = meta.format === 'heif' ? (meta.compression === 'av1' ? 'image/avif' : null) : FORMATS[meta.format];
-  if (KEEP_TYPES.has(type) && (bytes.length <= KEEP_BYTES || type === 'image/gif')) {
+  if (KEEP_TYPES.has(type) && (bytes.length <= KEEP_BYTES || type === 'image/gif' || (type === 'image/webp' && meta.pages > 1))) {
     if (bytes.length > MAX_BYTES) throw new ImageError(`Couldn’t add “${name}”: it’s over 5 MB.`);
     const [width, height] = shownSize(meta);
     return { bytes, type, width, height, smaller: false };

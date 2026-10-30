@@ -1,7 +1,8 @@
 import * as Y from 'yjs';
+import { occurrences } from './calendar.js';
 import { CATEGORY_ORDER } from './categories.js';
 import { LABEL_COLORS, isLabelColor } from './labels.js';
-import { fromBase64, journalId, localDate, localDayBounds } from './util.js';
+import { addDays, fromBase64, journalId, localDate, localDayBounds } from './util.js';
 
 // A task's live subtasks, as `FROM ... WHERE` for counting them.
 const SUBTASKS_OF_I = `FROM links sl JOIN items s ON s.id = sl.to_id
@@ -191,6 +192,46 @@ export function createQueries(db) {
         day(t.due).due = t.n;
       }
       return days;
+    },
+
+    // The calendars the server reads (server/src/calendars.js), by name: each { id, name, error,
+    // checked_at, events }, `error` saying why it couldn't be read the last time it tried.
+    calendars() {
+      return db
+        .all(
+          `SELECT c.id, c.name, c.error, c.checked_at,
+             (SELECT COUNT(*) FROM events e WHERE e.calendar = c.id AND e.deleted = 0) AS events
+           FROM calendars c WHERE c.deleted = 0`,
+        )
+        .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', undefined, { sensitivity: 'base' }) || a.id.localeCompare(b.id));
+    },
+
+    // The events on a day from those calendars, each { id, calendar, title, location, description,
+    // url, allDay, start, end } (see occurrences in calendar.js): all-day ones first, then by when
+    // they start.
+    dayEvents(date) {
+      const rows = db.all(
+        `SELECT e.id, e.data, c.name AS calendar FROM events e JOIN calendars c ON c.id = e.calendar
+         WHERE e.deleted = 0 AND c.deleted = 0 AND json_valid(e.data)
+           AND json_extract(e.data, '$.first') <= ?
+           AND (json_extract(e.data, '$.last') IS NULL OR json_extract(e.data, '$.last') >= ?)`,
+        [date, date],
+      );
+      const events = [];
+      for (const row of rows) {
+        try {
+          for (const o of occurrences(JSON.parse(row.data), date, addDays(date, 1))) {
+            const { key, ...event } = o;
+            events.push({ id: `${row.id}/${key}`, calendar: row.calendar, ...event });
+          }
+        } catch {
+          // An event that can't be worked out isn't shown.
+        }
+      }
+      const cmp = (x, y) => (x < y ? -1 : x > y ? 1 : 0);
+      return events.sort(
+        (a, b) => b.allDay - a.allDay || cmp(a.start, b.start) || cmp(a.end, b.end) || (a.title ?? '').localeCompare(b.title ?? ''),
+      );
     },
 
     body(id) {

@@ -70,6 +70,15 @@ describe('images', () => {
     expect([fileSize(340 * 1024), fileSize(2.4 * 1024 * 1024)]).toEqual(['340 KB', '2.4 MB']);
   });
 
+  it('keeps an animated WebP whole, however large, up to 5 MB, as it does a GIF', async () => {
+    const frames = await Promise.all([0, 1].map(() => image(1200, 1000, { format: 'jpeg', noise: true })));
+    const moving = await sharp(frames, { join: { animated: true } }).webp({ quality: 86, effort: 0 }).toBuffer();
+    expect(moving.length).toBeGreaterThan(1.5 * 1024 * 1024);
+    const kept = await prepareImage(moving, 'noise.webp');
+    expect(kept.bytes).toBe(moving);
+    expect(kept).toMatchObject({ type: 'image/webp', width: 1200, height: 1000, smaller: false });
+  });
+
   it('draws an image in half blocks, in its colors, transparency in the background, at most the size asked', async () => {
     const lines = await imageLines(await image(100, 40, { alpha: true }), { cols: 50, rows: 12, background: '#171614' });
     // 100 × 40 into 50 columns: 50 pixels by 20, two to a row.

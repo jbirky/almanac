@@ -1118,6 +1118,75 @@ main {
   color: var(--text);
 }
 
+/* The day's events from the calendars the server reads, above its Due panel */
+.events-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 12px 16px 14px;
+  background: var(--panel);
+  border-radius: var(--radius);
+}
+
+.events-panel h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.events-panel .empty {
+  font-size: 14px;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-row {
+  display: grid;
+  grid-template-columns: minmax(7.5em, max-content) 1fr;
+  gap: 2px 14px;
+  align-items: baseline;
+  padding: 2px 0;
+}
+
+.event-time {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.event-main {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-where {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.event-notes summary {
+  width: fit-content;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.event-notes p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
 /* The day's "Due" panel, above the journal */
 .due-panel {
   display: flex;
@@ -1856,6 +1925,24 @@ main {
   font-weight: 650;
 }
 
+.calendar-list {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar-list li {
+  padding: 4px 0;
+}
+
+.calendar-name {
+  font-weight: 600;
+}
+
+.calendar-list .server-error {
+  margin: 2px 0 0;
+}
+
 .settings-section fieldset {
   margin: 0 0 18px;
   padding: 0;
@@ -2117,6 +2204,10 @@ main {
 .settings-note {
   margin: 0;
   font-size: 13px;
+}
+
+.settings-note + .settings-section {
+  margin-top: 32px;
 }
 
 /* The Android app's Today widget, added from Settings. */

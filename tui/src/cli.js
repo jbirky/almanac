@@ -5,7 +5,7 @@ import { createElement as h } from 'react';
 import { render } from 'ink';
 import chalk from 'chalk';
 import Database from 'better-sqlite3';
-import { adaptBetterSqlite, createQueries, fullDay, localDate, normalizeServerUrl, relativeDay } from '@almanac/shared';
+import { adaptBetterSqlite, createQueries, eventTime, fullDay, localDate, normalizeServerUrl, relativeDay } from '@almanac/shared';
 import { addTask, attachFiles, dayReport, describeTask, fileSize, logText } from './commands.js';
 import { checkServer, locations, readConfig, writeConfig } from './config.js';
 import { askRunning, serveControl } from './control.js';
@@ -20,7 +20,7 @@ const USAGE = `Almanac in the terminal: your journal and tasks, kept on this mac
 
   almanac                  the full-screen journal and tasks
   almanac add "<text>"     add a task, read as the task box reads it: "submit abstract fri #paper"
-  almanac today [--json]   what's due today, what's overdue, and what got finished
+  almanac today [--json]   today's events, what's due today, what's overdue, and what got finished
   almanac log "<text>"     a paragraph at the end of today's journal (or text piped in)
   almanac attach <image>   an image at the end of today's journal, made smaller as the web does
   almanac sync             sync now, and say how it went
@@ -111,6 +111,15 @@ function todayText(report, today) {
     return right ? `${left}${' '.repeat(gap)}${right}` : left;
   };
   const out = [];
+  if (report.events.length) {
+    const times = report.events.map((e) => eventTime(e, today));
+    const tw = Math.max(...times.map(columns));
+    out.push(chalk.bold.dim('Events today'));
+    report.events.forEach((e, i) => {
+      const where = e.location ? chalk.dim(` · ${e.location}`) : '';
+      out.push(`  ${chalk.hex('#9b958b')(times[i])}${' '.repeat(tw - columns(times[i]) + 2)}${e.title ?? '(No title)'}${where}`);
+    });
+  }
   for (const [name, list] of [
     ['Due today', report.due],
     ['Overdue', report.overdue],

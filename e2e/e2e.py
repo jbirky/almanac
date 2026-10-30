@@ -1,6 +1,8 @@
 # End-to-end test: two browser contexts act as two devices against a running server.
 # Run with scripts/e2e (uses the Playwright Docker image).
+import base64
 import re
+from urllib.parse import parse_qs, urlparse
 from playwright.sync_api import sync_playwright, expect
 from common import BROWSER, OUT, URL, attach, local_date, report, step, sync_now, wait_synced
 
@@ -776,6 +778,65 @@ with sync_playwright() as p:
     phone.goto(URL)
     page.get_by_role("button", name="Today", exact=True).click()
     step("an image dropped on the journal goes where it's dropped; a large pasted one is made smaller, with the cursor below it; two paste at once; dragging moves one; other files are refused; they reach the phone; Backspace removes one")
+
+    # Images from the web: a pasted link to a GIF, or a picture copied from a page, is fetched by
+    # the server (answered here by the test) and kept whole, so it still moves.
+    gif = base64.b64decode("R0lGODlhKAAeAIAAAExpccg8PCH/C05FVFNDQVBFMi4wAwEAAAAh+QQFHgAAACwAAAAAKAAeAAACIYyPqcvtD6OctNqLs968+w+G4kiW5omm6sq27gvH8kxzBQAh+QQFHgAAACwAAAAAKAAeAIBMaXE8PMgCIYyPqcvtD6OctNqLs968+w+G4kiW5omm6sq27gvH8kxzBQA7")
+    fetched = []
+    def answer_image(route):
+        url = parse_qs(urlparse(route.request.url).query)["url"][0]
+        fetched.append(url)
+        if url.endswith("missing.gif"):
+            route.fulfill(status=422, json={"error": "There's no image at example.org/missing.gif."})
+        else:
+            route.fulfill(status=200, body=gif, headers={"Content-Type": "image/gif", "X-Image-Name": "cat-dance.gif"})
+    page.route(re.compile(r"/api/image\?"), answer_image)
+    paste = """async ({ types, png = false }) => {
+      const data = new DataTransfer();
+      for (const [type, value] of Object.entries(types)) data.setData(type, value);
+      if (png) {
+        // What a browser's "Copy image" puts on the clipboard with the picture's address: a PNG.
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 8;
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+        data.items.add(new File([blob], 'image.png', { type: 'image/png' }));
+      }
+      const paste = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
+      Object.defineProperty(paste, 'clipboardData', { value: data });
+      document.querySelector('.day-page .prose').dispatchEvent(paste);
+    }"""
+    image_type = "(i) => fetch(document.querySelectorAll('.image-block img')[i].src).then((r) => r.blob()).then((b) => b.type)"
+    web_day = local_date(page, -4)
+    page.locator(f'.heatmap .cell[data-date="{web_day}"]').click()
+    expect(page).to_have_url(re.compile(web_day))
+    expect(page.locator(".prose")).to_have_text("")
+    page.locator(".journal-rest").click()
+    expect(page.locator(".prose")).to_be_focused()
+    page.keyboard.type("Reaction:")
+    page.evaluate(paste, {"types": {"text/plain": "https://giphy.com/gifs/cat-dance-ABC123"}})
+    expect(images).to_have_count(1)
+    expect(images.first).to_have_attribute("alt", "cat-dance")
+    page.wait_for_function("document.querySelector('.image-block img').naturalWidth === 40")
+    assert page.evaluate(image_type, 0) == "image/gif"
+    assert fetched == ["https://giphy.com/gifs/cat-dance-ABC123"], fetched
+    page.evaluate(paste, {"types": {"text/html": '<meta charset="utf-8"><img src="https://media.tenor.com/abc/cat-dance.gif">'}, "png": True})
+    expect(images).to_have_count(2)
+    page.wait_for_function("document.querySelectorAll('.image-block img')[1]?.naturalWidth === 40")
+    assert page.evaluate(image_type, 1) == "image/gif"
+    assert fetched[-1] == "https://media.tenor.com/abc/cat-dance.gif", fetched
+    # One that can't be fetched is pasted as the link it is. A link to a page that isn't an image
+    # is left to the editor to paste as text (which a paste made by a script doesn't do), unfetched.
+    page.evaluate(paste, {"types": {"text/plain": "https://example.org/missing.gif"}})
+    expect(page.locator(".notice")).to_have_text(re.compile("Couldn't add the image from example.org. There's no image at example.org/missing.gif."))
+    expect(page.locator(".prose")).to_contain_text("https://example.org/missing.gif")
+    page.evaluate(paste, {"types": {"text/plain": "https://arxiv.org/abs/2410.01234"}})
+    page.wait_for_timeout(300)
+    expect(images).to_have_count(2)
+    assert len(fetched) == 3, fetched
+    page.unroute(re.compile(r"/api/image\?"))
+    page.screenshot(path=f"{OUT}/{BROWSER}-17-web-images.png")
+    page.get_by_role("button", name="Today", exact=True).click()
+    step("a pasted Giphy link or a picture copied from a page is fetched by the server and kept as the GIF it is; one that can't be is pasted as a link; other links aren't fetched")
 
     boxes.nth(1).locator(".label-chip").click()
     page.get_by_role("button", name=re.compile("Rename or recolor")).click()

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { normalizeServerUrl } from '@almanac/shared';
 import { setServer, syncNow } from '../lib/db.js';
+import { useQuery } from '../lib/hooks.js';
 import { IS_APP, checkServer, serverUrl } from '../lib/server.js';
 import { pinWidget } from '../lib/widget.js';
 import { FONTS, FONT_KINDS, MODES, THEMES, setSetting, useSettings } from '../lib/settings.js';
@@ -9,7 +10,7 @@ import { FONTS, FONT_KINDS, MODES, THEMES, setSetting, useSettings } from '../li
 const PREVIEW_CELLS = [1, 3, 0, 2, 4, 1, 0, 3, 2, 4, 1, 2];
 
 // Appearance: light or dark, a color scheme, and a font. Each applies at once. In the Android
-// app, also the server it syncs with.
+// app, also the server it syncs with. Then the calendars the server reads, the same everywhere.
 export function SettingsPage({ views }) {
   const settings = useSettings();
   return (
@@ -108,7 +109,53 @@ export function SettingsPage({ views }) {
       <p className="subtle settings-note">
         These are saved {IS_APP ? 'in this app' : 'in this browser'}, so each of your devices keeps its own.
       </p>
+
+      <CalendarSettings />
     </article>
+  );
+}
+
+// "just now", "5 minutes ago", "3 hours ago", or the day.
+function ago(iso) {
+  const minutes = Math.round((Date.now() - Date.parse(iso)) / 60_000);
+  if (minutes < 1) return 'just now';
+  const format = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+  if (minutes < 60) return format.format(-minutes, 'minute');
+  if (minutes < 24 * 60) return format.format(-Math.round(minutes / 60), 'hour');
+  return `on ${new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+}
+
+// The calendars the server reads (server/src/calendars.js), whose events each day shows, and how
+// reading each went. They're set on the server, so this only shows them.
+function CalendarSettings() {
+  const calendars = useQuery('calendars', [], ['calendars', 'events']);
+  if (!calendars) return null;
+  return (
+    <section className="settings-section calendar-settings" aria-labelledby="settings-calendars">
+      <h2 id="settings-calendars">Calendars</h2>
+      {calendars.length > 0 && (
+        <ul className="calendar-list">
+          {calendars.map((c) => (
+            <li key={c.id}>
+              <span className="calendar-name">{c.name}</span>
+              <span className="subtle">
+                {' '}
+                · {c.events === 1 ? '1 event' : `${c.events} events`}
+                {c.checked_at && ` · ${c.error ? 'tried' : 'read'} ${ago(c.checked_at)}`}
+              </span>
+              {c.error && <p className="server-error">{c.error}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="subtle">
+        {calendars.length > 0
+          ? 'Each day shows its events from these, which your server reads every 10 minutes. '
+          : 'Each day can show its events from your Proton Calendar. '}
+        To add a calendar, share it with a link in Proton Calendar’s settings (full view, for the events’ titles),
+        and add that link to <code>ALMANAC_CALENDARS</code> on your server. Any other calendar’s ICS link works too.
+      </p>
+    </section>
   );
 }
 

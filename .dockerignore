@@ -9,3 +9,4 @@ android-signing
 build
 e2e/shots
 tui/.scratch
+.env

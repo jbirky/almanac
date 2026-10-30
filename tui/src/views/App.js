@@ -258,6 +258,8 @@ export function App({ theme, paths }) {
   const labelList = useQuery('labels');
   const labels = useMemo(() => new Map(labelList.map((l) => [l.id, l])), [labelList]);
   const dueTasks = useQuery('dayTasks', [s.day, today]);
+  const calendars = useQuery('calendars', [], ['calendars']);
+  const events = useQuery('dayEvents', [s.day], ['calendars', 'events']);
   const pins = useQuery('pinnedBoxes', [s.day]);
   const pinnedFromList = useQuery('pinnedFrom', [s.day]);
   const pinnedFrom = useMemo(() => new Set(pinnedFromList), [pinnedFromList]);
@@ -455,7 +457,7 @@ export function App({ theme, paths }) {
     const here = { ...base, w: rw - 1, narrow, cursor: s.pane === 'journal' ? cursor : null, caret };
     if (s.help) return helpRows(s.pane, searching, theme, s.view, rw - 1);
     if (byLabel) return labelRows({ ...here, label, labelList, days: labelSections, more: allLabelDays.length - shownLabelDays.length });
-    return dayRows({ ...here, day: s.day, dueTasks, pinned, blocks });
+    return dayRows({ ...here, day: s.day, dueTasks, calendars, events, pinned, blocks });
   };
   if (!byLabel) seek('journal', makeJournal);
   const journal = paneModel(rightName, makeJournal);

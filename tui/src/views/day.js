@@ -1,13 +1,13 @@
-import { addDays, fullDay, shortDay } from '@almanac/shared';
+import { addDays, eventTime, fullDay, shortDay } from '@almanac/shared';
 import { layoutText } from '../journal/layout.js';
 import { latexToUnicode } from '../journal/math.js';
-import { lineWidth, piece, spread, width, wrap } from '../text.js';
+import { lineWidth, piece, spread, truncate, width, wrap } from '../text.js';
 import { subtaskLine, taskLine } from './rows.js';
 
 const NEAR = { [-1]: 'YESTERDAY', 0: 'TODAY', 1: 'TOMORROW' };
 
-// The journal pane's rows: the day's name, its Due panel, the notes boxes pinned on earlier
-// days, then the day's journal. A row is { line, margin, bg, stop, part, data, text }: its pieces,
+// The journal pane's rows: the day's name, its events from the calendars the server reads (if it
+// reads any), its Due panel, the notes boxes pinned on earlier days, then the day's journal. A row is { line, margin, bg, stop, part, data, text }: its pieces,
 // the columns before them that keep the pane's own background, the background after that, and,
 // on the rows the cursor can stop on, the stop's key and what's there (`part` marks a stop's other
 // rows). A row of a textblock's text has `text`: { el, from, to, x, cols }, the places on it and
@@ -19,7 +19,7 @@ const NEAR = { [-1]: 'YESTERDAY', 0: 'TODAY', 1: 'TOMORROW' };
 // when it can be written in, `date` the day whose journal it's in, and `boxOnly` when it's shown
 // as part of a box away from that journal (pinned, or by label), where it stays in its box.
 export function dayRows(ctx) {
-  const { day, today, dueTasks, pinned, blocks, theme, w } = ctx;
+  const { day, today, dueTasks, pinned, blocks, theme, w, calendars = [], events = [] } = ctx;
   const rows = [];
   const cw = w - 4;
   const near = [-1, 0, 1].find((n) => addDays(today, n) === day);
@@ -29,11 +29,31 @@ export function dayRows(ctx) {
   rows.push({ line: spread([piece(fullDay(day, today), { bold: true })], [piece('[ ‹   › ]', { fg: theme.muted })], cw), margin: 1 });
   rows.push({ line: [] });
 
-  // The Due panel.
   const when = near !== undefined ? ['yesterday', 'today', 'tomorrow'][near + 1] : `on ${shortDay(day, today)}`;
   const lead = [piece('  ')];
   const pw = w - 5;
   const panel = (line, extra = {}) => rows.push({ line: [...lead, ...line], bg: theme.panel, ...extra });
+
+  // The events: when, then what and where, wrapped beside it.
+  if (calendars.length) {
+    panel([]);
+    panel([piece(`Events ${when}`, { fg: theme.muted, bold: true })]);
+    if (!events.length) panel([piece('No events.', { fg: theme.muted })]);
+    const times = events.map((e) => eventTime(e, day));
+    const tw = Math.min(Math.max(0, ...times.map(width)), Math.floor(pw / 3));
+    events.forEach((e, i) => {
+      const where = [e.location, calendars.length > 1 && e.calendar].filter(Boolean).join(' · ');
+      const what = [piece(e.title ?? '(No title)'), ...(where ? [piece(` · ${where}`, { fg: theme.muted })] : [])];
+      wrap(what, Math.max(1, pw - tw - 2)).forEach((line, j) => {
+        const time = truncate([piece(j ? '' : times[i], { fg: theme.muted })], tw);
+        panel([...time, piece(' '.repeat(tw - lineWidth(time) + 2)), ...line]);
+      });
+    });
+    panel([]);
+    rows.push({ line: [] });
+  }
+
+  // The Due panel.
   panel([]);
   panel([piece(`Due ${when}`, { fg: theme.muted, bold: true })]);
   if (!dueTasks.due.length) panel([piece('Nothing due.', { fg: theme.muted })]);

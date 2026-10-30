@@ -22,11 +22,12 @@ export function describeTask({ title, due, category }, today) {
   return [title, due && `due ${shortDay(due, today)}`, category].filter(Boolean).join(' · ');
 }
 
-// A day's Due panel as plain data, for `almanac today --json`.
+// A day's events and Due panel as plain data, for `almanac today --json`.
 export function dayReport(queries, date) {
   const pick = ({ id, title, status, due, category, subtasks, subtasks_done }) => ({ id, title, status, due, category, subtasks, subtasks_done });
+  const event = ({ title, location, allDay, start, end, calendar }) => ({ title, location, allDay, start, end, calendar });
   const { due, overdue, finished } = queries.dayTasks(date, date);
-  return { date, due: due.map(pick), overdue: overdue.map(pick), finished: finished.map(pick) };
+  return { date, events: queries.dayEvents(date).map(event), due: due.map(pick), overdue: overdue.map(pick), finished: finished.map(pick) };
 }
 
 // Text at the end of a day's journal, a paragraph for each line, for `almanac log`. Written into

@@ -9,6 +9,11 @@ services:
       - "127.0.0.1:8787:8787"
     volumes:
       - almanac-data:/data
+    environment:
+      # Calendars whose events each day shows: ICS links, such as a Proton Calendar shared with a
+      # link, separated by spaces or commas. A link lets anyone who has it read the calendar, so
+      # set it in a .env file beside this one (git leaves it out), not here.
+      ALMANAC_CALENDARS: ${ALMANAC_CALENDARS:-}
 
 volumes:
   almanac-data:

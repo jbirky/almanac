@@ -4,11 +4,13 @@
   "private": true,
   "description": "Schema, clock, merge and queries shared by the Almanac client and server",
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": "./src/index.js"
   },
   "dependencies": {
     "chrono-node": "^2.10.3",
+    "ical.js": "^2.2.1",
     "yjs": "^13.6.33"
   }
 }

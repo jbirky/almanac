@@ -1,4 +1,4 @@
-import { addDays } from './util.js';
+import { addDays, localDayBounds } from './util.js';
 
 // Dates in words, as the web app and the terminal show them, in the device's own language.
 
@@ -44,4 +44,26 @@ export function weekday(dateStr) {
 
 export function timeOfDay(iso) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+// "9:00 – 10:30 AM".
+export function timeRange(startIso, endIso) {
+  try {
+    return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).formatRange(new Date(startIso), new Date(endIso));
+  } catch {
+    return `${timeOfDay(startIso)} – ${timeOfDay(endIso)}`;
+  }
+}
+
+// When a calendar event is, on `day` (one of the days it's on): "All day", "9:00 – 10:30 AM",
+// "From 10:00 PM" for one going on past midnight, or "Until 2:00 AM" for one that began before.
+export function eventTime({ allDay, start, end }, day) {
+  if (allDay) return 'All day';
+  const [dayStart, dayEnd] = localDayBounds(day);
+  const before = start < dayStart;
+  const after = end > dayEnd;
+  if (before && after) return 'All day';
+  if (before) return `Until ${timeOfDay(end)}`;
+  if (after) return `From ${timeOfDay(start)}`;
+  return start === end ? timeOfDay(start) : timeRange(start, end);
 }

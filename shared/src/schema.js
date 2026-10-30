@@ -11,7 +11,11 @@
 // until being the day it was unpinned from, or null. Older props such as tags are ignored. Labels for
 // notes boxes are items of type 'label'. A subtask is a task with a 'subtask' link from its
 // parent task. files holds the images in notes, each written once and never changed: its
-// type ("image/png") and its bytes in base64; a body's image nodes name them by id.
+// type ("image/png") and its bytes in base64; a body's image nodes name them by id. The server
+// sets the bytes of one no note has shown for 30 days to null (server/src/store.js). calendars
+// and events are written only by the server, from the calendar feeds it reads
+// (server/src/calendars.js): a calendar's name and how reading it last went, and an event (per
+// UID) as shared/src/calendar.js describes it.
 export const TABLES = {
   items: ['type', 'title', 'status', 'scheduled', 'due', 'done_at', 'created_at', 'deleted'],
   props: ['item_id', 'key', 'value', 'deleted'],
@@ -21,6 +25,8 @@ export const TABLES = {
   bodies: ['ydoc'], // id = the item's id
   types: ['name', 'fields', 'template', 'deleted'], // id = a built-in type it overrides, or a new id
   files: ['type', 'data'],
+  calendars: ['name', 'error', 'checked_at', 'deleted'],
+  events: ['calendar', 'data', 'deleted'],
 };
 
 export function isSyncedCell(tbl, col) {
@@ -29,7 +35,7 @@ export function isSyncedCell(tbl, col) {
 
 // Bump when TABLES gains a table or column. Devices on an older version ignored changes to
 // cells they didn't know, so an upgraded device pulls the whole change log again.
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS items (
@@ -94,6 +100,22 @@ CREATE TABLE IF NOT EXISTS files (
   type TEXT,            -- MIME type, such as image/webp
   data TEXT             -- the bytes, in base64
 );
+
+CREATE TABLE IF NOT EXISTS calendars (
+  id TEXT PRIMARY KEY,  -- cal-<a hash of its link>
+  name TEXT,
+  error TEXT,           -- why it couldn't be read the last time, or null
+  checked_at TEXT,      -- ISO timestamp, UTC: when the server last read it
+  deleted INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS events (
+  id TEXT PRIMARY KEY,  -- <calendar id>/<the event's UID>
+  calendar TEXT,
+  data TEXT,            -- JSON: the event, as shared/src/calendar.js describes it
+  deleted INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS events_calendar ON events (calendar);
 
 CREATE TABLE IF NOT EXISTS bodies (
   id TEXT PRIMARY KEY,

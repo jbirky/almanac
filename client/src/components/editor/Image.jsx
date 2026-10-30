@@ -4,13 +4,16 @@ import { Plugin, TextSelection } from '@tiptap/pm/state';
 import { dropPoint } from '@tiptap/pm/transform';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import { newId } from '@almanac/shared';
-import { ImageError, prepareImage, saveImage, useImageUrl } from '../../lib/images.js';
+import { ImageError, fetchImage, prepareImage, saveImage, useImageUrl } from '../../lib/images.js';
+import { imageUrlIn } from '../../lib/web-images.js';
 import { notify } from '../Notices.jsx';
 
 const number = (value) => Number(value) || null;
 
 // An image in a note: a block of its own that names its file (lib/images.js) by id. Image
-// files dropped on a note or pasted into it are added; an image can be dragged to move it.
+// files dropped on a note or pasted into it are added, and so are images copied or dragged from
+// web pages and pasted links to them (a GIF on Giphy or Tenor too); an image can be dragged to
+// move it.
 export const ImageBlock = Node.create({
   name: 'image',
   group: 'block',
@@ -48,17 +51,27 @@ export const ImageBlock = Node.create({
       new Plugin({
         props: {
           handleDrop(view, event, slice, moved) {
-            const files = event.dataTransfer?.files;
-            if (moved || !files?.length) return false;
-            const at = view.posAtCoords({ left: event.clientX, top: event.clientY });
-            addImages(view, type, files, at?.pos ?? view.state.selection.from);
+            const data = event.dataTransfer;
+            if (moved || !data) return false;
+            const url = imageUrlIn(data);
+            if (!url && !data.files.length) return false;
+            const at = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? view.state.selection.from;
+            if (url) addFromWeb(view, type, url, { files: [...data.files], text: null }, at);
+            else addImages(view, type, data.files, at);
             return true;
           },
-          // An image on the clipboard, such as a screenshot. Copied text that comes with a
-          // picture of itself (as from a spreadsheet) is pasted as text.
+          // An image on the clipboard, such as a screenshot, or one copied from a web page or
+          // linked to. Copied text that comes with a picture of itself (as from a spreadsheet) is
+          // pasted as text.
           handlePaste(view, event) {
             const data = event.clipboardData;
-            if (!data?.files.length || data.getData('text/plain').trim()) return false;
+            if (!data) return false;
+            const url = imageUrlIn(data);
+            if (url) {
+              addFromWeb(view, type, url, { files: [...data.files], text: data.files.length ? null : data.getData('text/plain') }, null);
+              return true;
+            }
+            if (!data.files.length || data.getData('text/plain').trim()) return false;
             addImages(view, type, data.files, null);
             return true;
           },
@@ -67,6 +80,25 @@ export const ImageBlock = Node.create({
     ];
   },
 });
+
+// Puts the image at web address `url` into the note, as addImages does a file: the original,
+// fetched by the server, since the copy a browser puts on the clipboard is a still PNG, even of a
+// GIF. If it can't be fetched, that copy goes in (`files`), or else the pasted link as text.
+async function addFromWeb(view, type, url, { files, text }, pos) {
+  let file;
+  try {
+    file = await fetchImage(url);
+  } catch (err) {
+    if (files.length) {
+      notify(`${err.message} Your browser's copy of it is added instead; if it's a GIF, it may not move.`);
+      return addImages(view, type, files, pos);
+    }
+    notify(err.message);
+    if (text && !view.isDestroyed) view.dispatch(view.state.tr.insertText(text).scrollIntoView());
+    return;
+  }
+  return addImages(view, type, [file], pos);
+}
 
 // Puts image files into the note at `pos` (where they were dropped) or, with null, in place
 // of the selection. Other files are left out, with a note saying so.

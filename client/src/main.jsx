@@ -33,9 +33,11 @@ import '@fontsource/courier-prime/700-italic.css';
 import 'katex/dist/katex.min.css';
 import './styles.css';
 
-// A file dropped anywhere but in a note would open in place of the app.
+// A file, or a picture or link dragged from another page, dropped anywhere but in a note would
+// open in place of the app.
 addEventListener('dragover', (e) => {
-  if (e.defaultPrevented || !e.dataTransfer?.types.includes('Files') || e.target.isContentEditable) return;
+  const types = e.dataTransfer?.types ?? [];
+  if (e.defaultPrevented || !(types.includes('Files') || types.includes('text/uri-list')) || e.target.isContentEditable) return;
   e.preventDefault();
   e.dataTransfer.dropEffect = 'none';
 });

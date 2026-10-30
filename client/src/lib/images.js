@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { action, onChange, query } from './db.js';
+import { serverUrl } from './server.js';
+import { isAnimatedWebp } from './web-images.js';
 
 // Images in notes are kept, synced and shown from the database (the files table), so every
 // device has them offline. One that is already small is kept as it is, so a plot or a
@@ -21,8 +23,8 @@ export async function prepareImage(file) {
   }
   try {
     const { width, height } = bitmap;
-    // A GIF would lose its animation, so it's kept whole or not at all.
-    const keep = KEEP_TYPES.has(file.type) && (file.size <= KEEP_BYTES || file.type === 'image/gif');
+    // A GIF or an animated WebP would lose its animation, so it's kept whole or not at all.
+    const keep = KEEP_TYPES.has(file.type) && (file.size <= KEEP_BYTES || (await isAnimated(file)));
     if (keep) {
       if (file.size > MAX_BYTES) throw new ImageError(`Couldn't add “${file.name}”: it's over 5 MB.`);
       return { blob: file, width, height };
@@ -37,6 +39,33 @@ export async function prepareImage(file) {
   } finally {
     bitmap.close();
   }
+}
+
+async function isAnimated(file) {
+  if (file.type === 'image/gif') return true;
+  return file.type === 'image/webp' && isAnimatedWebp(new Uint8Array(await file.slice(0, 32).arrayBuffer()));
+}
+
+// The image at web address `url` (an image's own, or a GIF's page on Giphy or Tenor) as a File to
+// add like a dropped one, fetched by the server, since few sites let a page read their images. An
+// ImageError says why not.
+export async function fetchImage(url) {
+  const where = new URL(url).hostname.replace(/^www\./, '');
+  let blob;
+  let name;
+  try {
+    const res = await fetch(`${serverUrl()}/api/image?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(30_000) });
+    if (!res.ok) {
+      const error = await res.json().then((body) => body.error, () => null);
+      throw new ImageError(`Couldn't add the image from ${where}.${error ? ` ${error}` : ''}`);
+    }
+    blob = await res.blob();
+    name = decodeURIComponent(res.headers.get('X-Image-Name') ?? '');
+  } catch (err) {
+    if (err instanceof ImageError) throw err;
+    throw new ImageError(`Couldn't add the image from ${where}: the server can't be reached.`);
+  }
+  return new File([blob], name || 'image', { type: blob.type });
 }
 
 // WebP keeps transparency; a browser that can't write it (Safari) gives JPEG on white.

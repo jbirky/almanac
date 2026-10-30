@@ -1,5 +1,6 @@
 import { addDays, fullDay, journalId, shortDay } from '@almanac/shared';
 import { NoteEditor } from '../components/editor/NoteEditor.jsx';
+import { EventsPanel } from '../components/EventsPanel.jsx';
 import { PinnedBoxes } from '../components/PinnedBoxes.jsx';
 import { TaskInput, TaskRow } from '../components/TaskRow.jsx';
 import { action } from '../lib/db.js';
@@ -7,11 +8,15 @@ import { useQuery } from '../lib/hooks.js';
 
 const NEAR = { [-1]: 'Yesterday', 0: 'Today', 1: 'Tomorrow' };
 
-// One day: its "Due" panel, the notes boxes pinned on earlier days, then the day's journal. A
-// task typed into the journal has no due date until it's given one.
+// One day: its events from the calendars the server reads, its "Due" panel, the notes boxes
+// pinned on earlier days, then the day's journal. A task typed into the journal has no due date
+// until it's given one.
 export function DayPage({ day, today, views, onSelect, onShowCalendar }) {
   const tasks = useQuery('dayTasks', [day, today]);
+  const calendars = useQuery('calendars', [], ['calendars']);
+  const events = useQuery('dayEvents', [day], ['calendars', 'events']);
   const near = [-1, 0, 1].find((n) => addDays(today, n) === day);
+  const when = near !== undefined ? NEAR[near].toLowerCase() : `on ${shortDay(day, today)}`;
   return (
     <article className="day-page">
       <header className="day-header">
@@ -36,7 +41,8 @@ export function DayPage({ day, today, views, onSelect, onShowCalendar }) {
           </nav>
         </div>
       </header>
-      <DuePanel day={day} today={today} near={near} tasks={tasks} />
+      <EventsPanel day={day} when={when} calendars={calendars} events={events} />
+      <DuePanel day={day} today={today} when={when} tasks={tasks} />
       <PinnedBoxes day={day} today={today} onSelect={onSelect} />
       <NoteEditor
         noteId={journalId(day)}
@@ -50,8 +56,7 @@ export function DayPage({ day, today, views, onSelect, onShowCalendar }) {
 
 // The tasks due that day, with a box to add one, then on today's page what's overdue, then
 // anything else finished that day.
-function DuePanel({ day, today, near, tasks }) {
-  const when = near !== undefined ? NEAR[near].toLowerCase() : `on ${shortDay(day, today)}`;
+function DuePanel({ day, today, when, tasks }) {
   const list = (rows, name) => (
     <ul className="task-list" aria-label={name}>
       {rows.map((t) => (

@@ -2,7 +2,7 @@ import * as Y from 'yjs';
 import { SCHEMA_SQL, SCHEMA_VERSION, isSyncedCell } from './schema.js';
 import { createClock, hlcNode, isHlc } from './hlc.js';
 import { fromBase64, randomHex } from './util.js';
-import { ydocText } from './body.js';
+import { fileIdsInDoc, ydocText } from './body.js';
 
 // The last of `rows` (in order, each with a `size`) that fits in `maxBytes` all together; the
 // first one even if it alone is larger. Undefined if there are none.
@@ -175,13 +175,41 @@ export function createCore(db, { now = Date.now } = {}) {
   function receive(messages) {
     return write(() => {
       let applied = 0;
+      let shown = null;
       for (const msg of messages) {
         if (!isHlc(msg.hlc) || hlcNode(msg.hlc) === node) continue;
         clock.recv(msg.hlc);
+        // The server removes an image file once no note has shown it for a while. If a note
+        // here shows it again (one written offline, say), its bytes are written again instead,
+        // after the removal, so they win.
+        if (msg.tbl === 'files' && msg.col === 'data' && (msg.value == null || msg.value === 'null')) {
+          const kept = db.get('SELECT data FROM files WHERE id = ?', [msg.row])?.data;
+          if (kept && (shown ??= filesShown()).has(msg.row)) {
+            mutate([{ tbl: 'files', row: msg.row, col: 'data', value: kept }]);
+            continue;
+          }
+        }
         if (applyMessage(msg)) applied++;
       }
       return applied;
     });
+  }
+
+  // Ids of the image files any note here shows.
+  function filesShown() {
+    const ids = new Set();
+    for (const { ydoc } of db.all('SELECT ydoc FROM bodies WHERE ydoc IS NOT NULL')) {
+      const doc = new Y.Doc();
+      try {
+        Y.applyUpdate(doc, ydoc);
+        for (const id of fileIdsInDoc(doc)) ids.add(id);
+      } catch {
+        // A body that can't be read shows nothing.
+      } finally {
+        doc.destroy();
+      }
+    }
+    return ids;
   }
 
   return {
@@ -191,6 +219,7 @@ export function createCore(db, { now = Date.now } = {}) {
     write,
     mutate,
     receive,
+    filesShown,
     getMeta,
     setMeta,
     // The oldest changes waiting to go out, up to `limit` of them and about `maxBytes` of
