@@ -54,6 +54,7 @@ export function dayRows(ctx) {
   }
 
   // The Due panel.
+  const due = rows.length;
   panel([]);
   panel([piece(`Due ${when}`, { fg: theme.muted, bold: true })]);
   if (!dueTasks.due.length) panel([piece('Nothing due.', { fg: theme.muted })]);
@@ -73,17 +74,21 @@ export function dayRows(ctx) {
     for (const t of list) taskRows(ctx, rows, `${prefix}:${t.id}`, t, { w: pw, lead, bg: theme.panel });
   }
   panel([]);
+  markSection(rows, due, 'due');
   rows.push({ line: [] });
 
   // Boxes pinned on earlier days, each the box itself, from its own day's journal, written in
   // there.
   for (const pin of pinned) {
-    boxRows(ctx, rows, `pin:${pin.date}/${pin.box.id}`, pin.box, {
+    const key = `pin:${pin.date}/${pin.box.id}`;
+    const start = rows.length;
+    boxRows(ctx, rows, key, pin.box, {
       header: [piece(` · pinned from ${shortDay(pin.date, today)}`, { fg: theme.muted })],
       data: { kind: 'pinHeader', date: pin.date, box: pin.box },
       date: pin.date,
       boxOnly: true,
     });
+    markSection(rows, start, key);
     rows.push({ line: [] });
   }
 
@@ -92,9 +97,15 @@ export function dayRows(ctx) {
     rows.push({ line, margin: 1, stop: 'empty', data: { kind: 'empty', date: day } });
     ctx.picker('empty', rows, { lead: [], margin: 1 });
   }
+  // Each notes box is a box for J and K, and so is each run of lines between them.
+  let run = null;
   blocks.forEach((block, i) => {
     if (i > 0 && !tight(blocks[i - 1], block)) rows.push({ line: [] });
-    blockRows(ctx, rows, `blk:${day}:${block.key}`, block, { margin: 1, w: cw, lead: [], own: true, date: day });
+    const key = `blk:${day}:${block.key}`;
+    const start = rows.length;
+    blockRows(ctx, rows, key, block, { margin: 1, w: cw, lead: [], own: true, date: day });
+    run = block.kind === 'box' ? null : (run ?? key);
+    markSection(rows, start, run ?? key);
   });
   rows.push({ line: [] });
   rows.push({ line: [piece('+ Notes box', { fg: theme.faint })], margin: 1, stop: 'add-box', data: { kind: 'addBox' } });
@@ -108,6 +119,12 @@ export const viewSwitch = (view, theme) => [
   piece(' By day ', view === 'day' ? { fg: theme.text, bg: theme.accentSoft, bold: true } : { fg: theme.muted }),
   piece(' By label ', view === 'label' ? { fg: theme.text, bg: theme.accentSoft, bold: true } : { fg: theme.muted }),
 ];
+
+// Marks the rows from `from` on as box `id`'s, for J and K to go between (see sectionStop): a
+// panel, a notes box, the lines between boxes, a category of tasks.
+export function markSection(rows, from, id) {
+  for (let i = from; i < rows.length; i++) rows[i].section = id;
+}
 
 // Tasks one after another, and the items of a list, go without a blank line between them.
 const tight = (a, b) => (a.kind === 'task' && b.kind === 'task') || (a.kind === 'text' && b.kind === 'text' && a.marker && b.marker);

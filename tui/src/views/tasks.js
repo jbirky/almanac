@@ -1,6 +1,6 @@
 import { MATCH_END, MATCH_START, orderCategories, shortDay } from '@almanac/shared';
 import { piece, truncate, wrap } from '../text.js';
-import { taskRows } from './day.js';
+import { markSection, taskRows } from './day.js';
 
 // Open tasks grouped by category, in the order the web shows them: categories in the order set
 // on any device, then the others alphabetically, uncategorized tasks last; within each, tasks
@@ -27,10 +27,12 @@ export function taskListRows(ctx, groups) {
   if (!groups.length) return [{ line: [piece('No open tasks.', { fg: theme.muted })], stop: 'none', data: { kind: 'empty' } }];
   groups.forEach(({ name, tasks }, i) => {
     if (i > 0) rows.push({ line: [] });
+    const start = rows.length;
     if (name || groups.length > 1) {
       rows.push({ line: [piece(name || 'No category', { fg: theme.muted, bold: true })], stop: `cat:${name}`, data: { kind: 'category', name } });
     }
     for (const t of tasks) taskRows(ctx, rows, `task:${t.id}`, t, { w, quietCategory: true, data: { group: name } });
+    markSection(rows, start, `cat:${name}`);
   });
   return rows;
 }

@@ -5,7 +5,7 @@ import { readJournal } from '../src/journal/layout.js';
 import { lineWidth, width } from '../src/text.js';
 import { makeTheme } from '../src/theme.js';
 import { calendarLines, calendarStart, calendarWeeks, weekStart } from '../src/views/calendar.js';
-import { findStop, paneLines, scrollTo, stopsOf } from '../src/views/pane.js';
+import { findStop, paneLines, scrollTo, sectionStop, stopsOf } from '../src/views/pane.js';
 import { DATE_SLOT, taskLine } from '../src/views/rows.js';
 import { statusLine } from '../src/views/status.js';
 import { groupTasks } from '../src/views/tasks.js';
@@ -148,6 +148,21 @@ describe('a pane’s cursor', () => {
     expect(findStop(stops, 'gone', 1).key).toBe('b');
     expect(findStop(stops, 'gone', 9).key).toBe('c');
     expect(findStop([], 'gone')).toBeNull();
+  });
+
+  it('goes with J to the next box’s first stop, and with K to its own box’s or the one before', () => {
+    const boxed = [{ stop: 'a', section: 'x' }, { stop: 'b', section: 'x' }, { stop: 'c', section: 'y' }, { stop: 'd' }].map((r) => ({ line: [], ...r }));
+    const stops = stopsOf(boxed);
+    const [a, b, c, d] = stops;
+    expect(sectionStop(stops, a, 1)).toBe(c);
+    expect(sectionStop(stops, b, 1)).toBe(c);
+    expect(sectionStop(stops, c, 1)).toBe(d);
+    expect(sectionStop(stops, d, 1)).toBeNull();
+    expect(sectionStop(stops, b, -1)).toBe(a);
+    expect(sectionStop(stops, d, -1)).toBe(c);
+    expect(sectionStop(stops, c, -1)).toBe(a);
+    expect(sectionStop(stops, a, -1)).toBeNull();
+    expect(sectionStop([], null, 1)).toBeNull();
   });
 
   it('scrolls only as far as shows the whole stop', () => {

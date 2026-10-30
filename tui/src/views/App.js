@@ -33,7 +33,7 @@ import { calendarLines, calendarStart, calendarWeeks, describeDay } from './cale
 import { dayRows } from './day.js';
 import { helpRows } from './help.js';
 import { labelRows, labelUse, pickLabel } from './label.js';
-import { findStop, paneLines, scrollTo, stopsOf } from './pane.js';
+import { findStop, paneLines, scrollTo, sectionStop, stopsOf } from './pane.js';
 import { chipPiece } from './rows.js';
 import { statusLine } from './status.js';
 import { groupTasks, resultRows, taskListRows } from './tasks.js';
@@ -1121,10 +1121,12 @@ export function App({ theme, paths }) {
       next = dir > 0 ? stops.findIndex((x) => x.index >= row) : stops.findLastIndex((x) => x.index <= row);
       if (next < 0) next = dir > 0 ? stops.length - 1 : 0;
     }
-    next = clamp(next, 0, stops.length - 1);
-    // By label, reaching the end shows older days.
-    const more = stops[next].key === 'label-more' ? { labelCount: store.current.labelCount + LABEL_PAGE } : {};
-    set({ cursor: { ...store.current.cursor, [name]: stops[next].key }, ...more });
+    putCursor(name, stops[clamp(next, 0, stops.length - 1)]);
+  };
+  // Puts pane `name`'s cursor on `stop`. By label, reaching the end shows older days.
+  const putCursor = (name, stop) => {
+    const more = stop.key === 'label-more' ? { labelCount: store.current.labelCount + LABEL_PAGE } : {};
+    set({ cursor: { ...store.current.cursor, [name]: stop.key }, ...more });
   };
 
   const handleKey = (ch, key) => {
@@ -1186,6 +1188,8 @@ export function App({ theme, paths }) {
       const step = key.leftArrow || ch === 'h' ? -7 : key.rightArrow || ch === 'l' ? 7 : key.upArrow || ch === 'k' ? -1 : key.downArrow || ch === 'j' ? 1 : 0;
       if (step) return openDay(addDays(st.day, step));
       if (key.return) return set({ pane: 'journal', view: 'day' });
+      // J goes down to the box below: the task list, at its top.
+      if (ch === 'J') return set({ pane: 'tasks', cursor: { ...st.cursor, [listName]: list.stops[0]?.key ?? null } });
       return undefined;
     }
 
@@ -1193,6 +1197,16 @@ export function App({ theme, paths }) {
     const stop = target.model.stop;
     const data = stop?.data;
     if (st.pane === 'journal' && stop && blockKey(ch, key, stop) !== false) return undefined;
+    // h and l go between the columns, the task list and the journal. J and K go between the boxes
+    // in one: the journal's Due panel, notes boxes and the lines between them, the list's
+    // categories, and from the top of the list, the calendar above it.
+    if (ch === 'h' && st.pane === 'journal') return set({ pane: 'tasks' });
+    if (ch === 'l' && st.pane === 'tasks') return set({ pane: 'journal' });
+    if (ch === 'J' || ch === 'K') {
+      const next = sectionStop(target.model.stops, stop, ch === 'J' ? 1 : -1);
+      if (next) return putCursor(target.name, next);
+      return ch === 'K' && st.pane === 'tasks' ? set({ pane: 'calendar' }) : undefined;
+    }
     // Alt+↑ and Alt+↓ move what's under the cursor; plain arrows move the cursor.
     if (key.meta && (key.upArrow || key.downArrow)) {
       if (data?.kind === 'task' || data?.kind === 'subtask') return taskKey(ch, key, stop);

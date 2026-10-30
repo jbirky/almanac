@@ -1,6 +1,6 @@
 import { addDays, fullDay, relativeDay } from '@almanac/shared';
 import { lineWidth, piece, spread, truncate, wrap } from '../text.js';
-import { boxBlockRows, viewSwitch } from './day.js';
+import { boxBlockRows, markSection, viewSwitch } from './day.js';
 
 const NEAR = { [-1]: 'Yesterday', 0: 'Today', 1: 'Tomorrow' };
 
@@ -45,13 +45,18 @@ export function labelRows(ctx) {
   for (const { date, boxes } of days) {
     const near = [-1, 0, 1].find((n) => addDays(today, n) === date);
     const name = near !== undefined ? `${NEAR[near]} · ${fullDay(date, today)}` : fullDay(date, today);
+    const start = rows.length;
     rows.push({ line: [piece(name, { bold: true })], margin: 1, stop: `day:${date}`, data: { kind: 'labelDay', date } });
+    // Each box is one for J and K, the first with its day's line.
     boxes.forEach((box, i) => {
       if (i > 0) rows.push({ line: [] });
+      const from = rows.length;
       boxBlockRows(ctx, rows, box, { lead, bg: colors.box, w: w - 6, date, boxOnly: true });
+      markSection(rows, i ? from : start, `box:${date}:${box.key}`);
     });
     if (!boxes.length) {
       rows.push({ line: [piece('+ Add to today', { fg: theme.faint })], margin: 1, stop: 'label-add', data: { kind: 'labelAdd', date } });
+      markSection(rows, start, `day:${date}`);
     }
     rows.push({ line: [] });
   }

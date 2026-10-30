@@ -244,6 +244,46 @@ describe('the full-screen app', () => {
     await app.see('Make the terminal at least 40 × 16');
   });
 
+  it('goes between the boxes in a column with J and K, and between the columns with h and l', async () => {
+    const { replica, paths } = seededCopy();
+    const app = renderApp(replica, paths);
+    await app.see('Due today');
+    const on = (pane, text) => vi.waitFor(() => expect(app.cursorLine(pane)).toContain(text));
+    const mode = (name) => vi.waitFor(() => expect(app.lines().at(-1)).toContain(name));
+    const due = app.cursorLine('journal');
+    expect(due).toMatch(/Send slides to the group|call the observatory/);
+    // The Due panel, the lines before the box, the box, and the button after it.
+    await app.press('J');
+    await on('journal', 'Discussed priors for the fits.');
+    await app.press('J');
+    await on('journal', '● meeting');
+    await app.press('J');
+    await on('journal', '+ Notes box');
+    await app.press('J');
+    await on('journal', '+ Notes box');
+    // From inside the box, K goes to its top first, then to the box before.
+    await app.press('k');
+    await on('journal', 'Email the priors');
+    await app.press('K');
+    await on('journal', '● meeting');
+    await app.press('K', 'K');
+    await vi.waitFor(() => expect(app.cursorLine('journal')).toBe(due));
+
+    await app.press('h');
+    await mode('TASKS');
+    await on('tasks', 'meeting');
+    await app.press('J');
+    await on('tasks', 'observing');
+    await app.press('K', 'K');
+    await mode('CALENDAR');
+    await app.press('J');
+    await mode('TASKS');
+    await on('tasks', 'meeting');
+    await app.press('l');
+    await mode('JOURNAL');
+    expect(app.cursorLine('journal')).toBe(due);
+  });
+
   it('shows one pane at a time when narrow, the journal first, and Tab brings the others over it', async () => {
     const { replica, paths } = seededCopy();
     const app = renderApp(replica, paths, { columns: 64, rows: 26 });

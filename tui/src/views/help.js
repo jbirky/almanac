@@ -2,6 +2,8 @@ import { piece, wrap } from '../text.js';
 
 const EVERYWHERE = [
   ['Tab  Shift+Tab', 'Next or previous pane: calendar, tasks, journal'],
+  ['h  l', 'The column to the left or right: tasks, journal. In the calendar, a week.'],
+  ['J  K', 'Next or previous box: the Due panel, a notes box, a category; above the tasks, the calendar'],
   ['Ctrl+K  a', 'Add a task, in the box above the list'],
   ['/', 'Search. Esc clears it.'],
   ['[  ]', 'Previous or next day. By label: previous or next label.'],
